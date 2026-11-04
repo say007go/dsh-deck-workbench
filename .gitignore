@@ -1,0 +1,16 @@
+node_modules/
+.dsh-tmp/
+renders/
+images/
+*.log
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Never commit a reference deck or generated reference library.
+_reference/
+**/_reference/
+**/reference.pptx
+
+# Internal development docs are local-only, not part of the public repo/package.
+dev-docs/

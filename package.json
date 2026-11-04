@@ -1,0 +1,44 @@
+{
+  "name": "dsh-deck-workbench",
+  "version": "0.1.40",
+  "description": "DSH 方案工作台：新建项目、导入需求、项目内容对话、文案版本与 HTML/图片/PPTX 产物预览。",
+  "icon": "./icon.svg",
+  "type": "module",
+  "main": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./client/client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/",
+    "client/",
+    "locale/",
+    "tools/",
+    "skills/",
+    "icon.svg",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "keywords": [
+    "dsh",
+    "deck",
+    "ppt",
+    "workbench",
+    "content"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": []
+    }
+  }
+}
