@@ -1,0 +1,7 @@
+# dsh-deck-workbench bundle patch
+- insert:
+    - id: deck-workbench
+      name: 'dsh-deck-workbench'
+      config:
+        scanIntervalMs: 2000
+        maxVersionsPerPage: 50

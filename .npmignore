@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+*.pyo
+_reference/
+reference.pptx
+page-content/
+.DS_Store
+**/__pycache__/
+**/*.pyc
+dev-docs/
