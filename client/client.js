@@ -607,7 +607,7 @@ window.__ModuleLoader__.load({
       const header = h("div", { style: S.top },
         h("div", { style: { flex: "1 1 auto", minWidth: 180 } },
           h("div", { style: S.h1 }, "方案工作台"),
-          h("div", { style: S.muted }, "开发者：圣婴 | 微信：say007go | 版本号：0.1.43")
+          h("div", { style: S.muted }, "开发者：圣婴 | 微信：say007go | 版本号：0.1.44")
         ),
         h(Button, { onClick: () => setNewOpen(true), variant: "primary" }, "新建项目"),
         h(Button, { onClick: () => setSettingsOpen(true) }, "设置"),
@@ -1160,7 +1160,24 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
             referenceLibraries.length
               ? referenceLibraries.map(referenceRow)
               : h(Empty, { text: multiLibraryReady ? "还没有参考库。在下面新建第一个库。" : "当前 DSH 宿主还没有加载多参考库接口。" })
-          )
+          ),
+          referenceCheck ? h("div", {
+            style: {
+              marginTop: 10,
+              padding: "8px 10px",
+              borderRadius: 8,
+              border: `1px solid ${referenceCheck.ok ? "#2f8f5b" : "#d9534f"}55`,
+              color: referenceCheck.ok ? "#2f8f5b" : "#d9534f",
+              fontSize: 11,
+              lineHeight: 1.7,
+            },
+          },
+            h("div", { style: { fontWeight: 600 } }, `校验结果：${referenceCheck.reference?.name || "参考库"}`),
+            h("div", null, referenceCheck.ok ? "校验通过：参考库结构、索引和页面图一致。" : `校验未通过：${referenceErrors.length} 项问题。`),
+            !referenceCheck.ok && referenceErrors.length
+              ? h("div", { style: { marginTop: 4 } }, `${referenceErrors.slice(0, 5).join("；")}${referenceErrors.length > 5 ? "；…" : ""}`)
+              : null
+          ) : null
         ),
         multiLibraryReady ? h("div", { style: promptCard },
           sectionHeader("新建参考库", h("div", { style: { ...S.muted, fontSize: 11 } }, referenceLibraries.length ? "" : "第一个库构建成功后会自动设为当前库")),
@@ -1183,22 +1200,6 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
           h("div", { style: { ...S.muted, fontSize: 11, lineHeight: 1.7 } },
             "支持 .pptx。构建需要 LibreOffice 和 Python，通常需要几分钟；构建期间不要关闭设置。"
           ),
-          referenceCheck ? h("div", {
-            style: {
-              marginTop: 10,
-              padding: "8px 10px",
-              borderRadius: 8,
-              border: `1px solid ${referenceCheck.ok ? "#2f8f5b" : "#d9534f"}55`,
-              color: referenceCheck.ok ? "#2f8f5b" : "#d9534f",
-              fontSize: 11,
-              lineHeight: 1.7,
-            },
-          },
-            h("div", null, referenceCheck.ok ? "校验通过：参考库结构、索引和页面图一致。" : `校验未通过：${referenceErrors.length} 项问题。`),
-            !referenceCheck.ok && referenceErrors.length
-              ? h("div", { style: { marginTop: 4 } }, `${referenceErrors.slice(0, 5).join("；")}${referenceErrors.length > 5 ? "；…" : ""}`)
-              : null
-          ) : null
         ) : null,
         referenceProgress ? h("div", { style: promptCard },
           h("div", { style: { ...S.row, justifyContent: "space-between", marginBottom: 8 } },
@@ -1248,7 +1249,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
         ),
         h("div", { style: promptCard },
           sectionHeader("诊断与重置", null,
-            "当前插件 v0.1.43。参考库状态和内容技能状态会随保存刷新。"),
+            "当前插件 v0.1.44。参考库状态和内容技能状态会随保存刷新。"),
           h("div", { style: { ...S.row, flexWrap: "wrap" } },
             h(Button, { variant: "ghost", onClick: () => void refreshCapabilities() }, "刷新能力状态"),
             h(Button, { variant: "ghost", onClick: resetPrompts }, "恢复默认提示词")
