@@ -588,7 +588,7 @@ window.__ModuleLoader__.load({
       const header = h("div", { style: S.top },
         h("div", { style: { flex: "1 1 auto", minWidth: 180 } },
           h("div", { style: S.h1 }, "方案工作台"),
-          h("div", { style: S.muted }, "开发者：圣婴 | 微信：say007go | 版本号：0.1.40")
+          h("div", { style: S.muted }, "开发者：圣婴 | 微信：say007go | 版本号：0.1.41")
         ),
         h(Button, { onClick: () => setNewOpen(true), variant: "primary" }, "新建项目"),
         h(Button, { onClick: () => setSettingsOpen(true) }, "设置"),
@@ -1139,7 +1139,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
         ),
         h("div", { style: promptCard },
           sectionHeader("诊断与重置", null,
-            "当前插件 v0.1.40。参考库状态和内容技能状态会随保存刷新。"),
+            "当前插件 v0.1.41。参考库状态和内容技能状态会随保存刷新。"),
           h("div", { style: { ...S.row, flexWrap: "wrap" } },
             h(Button, { variant: "ghost", onClick: () => void refreshCapabilities() }, "刷新能力状态"),
             h(Button, { variant: "ghost", onClick: resetPrompts }, "恢复默认提示词")
