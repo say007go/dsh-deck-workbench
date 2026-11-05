@@ -14,3 +14,6 @@ _reference/
 
 # Internal development docs are local-only, not part of the public repo/package.
 dev-docs/
+
+# Runtime reference libraries (outside the plugin checkout by default).
+/references/

@@ -8,3 +8,5 @@ page-content/
 **/__pycache__/
 **/*.pyc
 dev-docs/
+
+/references/

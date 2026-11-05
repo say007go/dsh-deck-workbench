@@ -10,11 +10,11 @@ This repository is a DSH host plugin with a hand-written browser client and thre
 
 ## Hard boundaries
 
-- Never add a content skill, `reference.pptx`, `_reference/`, or generated page images to this repository or package.
+- Never add a content skill, `reference.pptx`, runtime `references/` directories, or generated page images to this repository or package. Legacy `_reference/` is covered by the same rule.
 - Keep the three bundled layout skills (`ppt-layout`, `html-layout`, `image-layout`) independent of the content skill name.
 - Do not add local absolute paths. System tools are resolved through environment variables and `PATH`.
 - Keep `content/pages/Pxx.md` as the content/layout contract.
-- `npm pack` must not include `dev-docs/`, `_reference/`, `reference.pptx`, `page-content/`, or Python caches.
+- `npm pack` must not include `dev-docs/`, runtime reference libraries, `reference.pptx`, `page-content/`, or Python caches.
 
 ## Useful checks
 
