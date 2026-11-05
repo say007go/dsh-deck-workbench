@@ -44,7 +44,7 @@ window.__ModuleLoader__.load({
     ];
     const DEFAULT_SETTINGS = {
       projectsRoot: "",
-      referenceRoot: "",
+      referencesRoot: "",
       contentMode: "skill",
       skills: { ...DEFAULT_SKILLS },
       contentPrompt: DEFAULT_CONTENT_PROMPT,
@@ -484,19 +484,29 @@ window.__ModuleLoader__.load({
         try {
           const data = await requestJson("api/settings");
           setSettings(data.settings || DEFAULT_SETTINGS);
-          setCapabilities({ reference: data.reference || null, imagegen: data.imagegen || null });
+          setCapabilities({
+            reference: data.reference || null,
+            libraries: data.libraries || [],
+            activeId: data.activeId || null,
+            referencesRoot: data.referencesRoot || "",
+            imagegen: data.imagegen || null,
+          });
         } catch {}
       };
 
       const saveSettings = async (next) => {
         const data = await requestJson("api/settings", { method: "POST", body: next });
         setSettings(data.settings || DEFAULT_SETTINGS);
-        setCapabilities({ reference: data.reference || null, imagegen: data.imagegen || null });
+        setCapabilities({
+          reference: data.reference || null,
+          libraries: data.libraries || [],
+          activeId: data.activeId || null,
+          referencesRoot: data.referencesRoot || "",
+          imagegen: data.imagegen || null,
+        });
         setSettingsOpen(false);
         if (data.restartRequired) {
           showToast("项目根目录已保存；重启 DSH 后生效");
-        } else if (data.referenceWriteError) {
-          showToast(`设置已保存；reference.json 写入失败：${data.referenceWriteError}`);
         } else {
           await loadProjects(true);
           showToast("设置已保存");
@@ -588,7 +598,7 @@ window.__ModuleLoader__.load({
       const header = h("div", { style: S.top },
         h("div", { style: { flex: "1 1 auto", minWidth: 180 } },
           h("div", { style: S.h1 }, "方案工作台"),
-          h("div", { style: S.muted }, "开发者：圣婴 | 微信：say007go | 版本号：0.1.41")
+          h("div", { style: S.muted }, "开发者：圣婴 | 微信：say007go | 版本号：0.1.42")
         ),
         h(Button, { onClick: () => setNewOpen(true), variant: "primary" }, "新建项目"),
         h(Button, { onClick: () => setSettingsOpen(true) }, "设置"),
@@ -633,6 +643,9 @@ window.__ModuleLoader__.load({
         settingsOpen ? h(SettingsModal, {
           settings,
           reference: capabilities.reference,
+          libraries: capabilities.libraries || [],
+          activeId: capabilities.activeId || null,
+          referencesRoot: capabilities.referencesRoot || settings?.referencesRoot || "",
           imagegen: capabilities.imagegen,
           onRefresh: loadSettings,
           onClose: () => setSettingsOpen(false),
@@ -642,10 +655,10 @@ window.__ModuleLoader__.load({
       );
     }
 
-    function SettingsModal({ settings, reference, imagegen, onRefresh, onClose, onSave }) {
+    function SettingsModal({ settings, reference, libraries, activeId, referencesRoot, imagegen, onRefresh, onClose, onSave }) {
       const [activeTab, setActiveTab] = useState("prompts");
       const [projectsRoot, setProjectsRoot] = useState(settings?.projectsRoot || "");
-      const [referenceRoot, setReferenceRoot] = useState(settings?.referenceRoot || "");
+      const [referencesRootValue, setReferencesRootValue] = useState(referencesRoot || settings?.referencesRoot || "");
       const [contentMode, setContentMode] = useState(settings?.contentMode === "builtin" ? "builtin" : "skill");
       const [skills, setSkills] = useState({ ...DEFAULT_SKILLS, ...(settings?.skills || {}) });
       const [contentPrompt, setContentPrompt] = useState(settings?.contentPrompt || "");
@@ -654,6 +667,9 @@ window.__ModuleLoader__.load({
       const [renderTarget, setRenderTarget] = useState("pptx");
       const [renderPolicy, setRenderPolicy] = useState("default");
       const [referenceLive, setReferenceLive] = useState(reference);
+      const [referenceLibraries, setReferenceLibraries] = useState(libraries || []);
+      const [activeReferenceId, setActiveReferenceId] = useState(activeId || null);
+      const [newReferenceName, setNewReferenceName] = useState("");
       const [imagegenLive, setImagegenLive] = useState(imagegen);
       const [referenceBusy, setReferenceBusy] = useState(false);
       const [referenceProgress, setReferenceProgress] = useState(null);
@@ -668,15 +684,15 @@ window.__ModuleLoader__.load({
       const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
       const initialSnapshot = useMemo(() => JSON.stringify({
         projectsRoot: settings?.projectsRoot || "",
-        referenceRoot: settings?.referenceRoot || "",
+        referencesRoot: referencesRoot || settings?.referencesRoot || "",
         contentMode: settings?.contentMode === "builtin" ? "builtin" : "skill",
         skills: { ...DEFAULT_SKILLS, ...(settings?.skills || {}) },
         contentPrompt: settings?.contentPrompt || "",
         contentFallbackPrompt: settings?.contentFallbackPrompt || DEFAULT_CONTENT_INSTRUCTION.join("\n"),
         renderPrompts: { ...DEFAULT_RENDER_PROMPTS, ...(settings?.renderPrompts || {}) },
-      }), [settings]);
+      }), [settings, referencesRoot]);
       const currentSnapshot = JSON.stringify({
-        projectsRoot, referenceRoot, contentMode, skills, contentPrompt, contentFallbackPrompt, renderPrompts,
+        projectsRoot, referencesRoot: referencesRootValue, contentMode, skills, contentPrompt, contentFallbackPrompt, renderPrompts,
       });
       const dirty = currentSnapshot !== initialSnapshot;
       const requestClose = () => {
@@ -689,8 +705,13 @@ window.__ModuleLoader__.load({
         setSkills((prev) => ({ ...prev, [key]: value }));
         setContentSkillStatus(null);
       };
-      const derivedReference = `${String(projectsRoot || "<项目根>").replace(/\\/g, "/")}/_reference`;
-      const referenceTargetDirty = projectsRoot !== (settings?.projectsRoot || "") || referenceRoot !== (settings?.referenceRoot || "");
+      const derivedReferencesRoot = (() => {
+        let value = String(projectsRoot || "<项目根>").replaceAll(String.fromCharCode(92), "/");
+        value = value.replace(/\/+$/, "");
+        const cut = value.lastIndexOf("/");
+        return cut > 0 ? `${value.slice(0, cut)}/references` : `${value}/references`;
+      })();
+      const referenceTargetDirty = projectsRoot !== (settings?.projectsRoot || "") || referencesRootValue !== (referencesRoot || settings?.referencesRoot || "");
       const copyValue = async (text) => {
         try {
           await navigator.clipboard.writeText(text);
@@ -711,19 +732,24 @@ window.__ModuleLoader__.load({
       const pickReference = async () => {
         try {
           const picked = await services.uiWorkspace?.pickDirectory?.();
-          if (picked) setReferenceRoot(picked);
+          if (picked) setReferencesRootValue(picked);
         } catch (cause) {
           setError(cause.message || String(cause));
         }
       };
+      const applyReferenceState = (data) => {
+        setReferenceLive(data.reference || null);
+        setReferenceLibraries(data.libraries || []);
+        setActiveReferenceId(data.activeId || null);
+      };
       const refreshCapabilities = async () => {
         const data = await requestJson("api/settings");
-        setReferenceLive(data.reference);
+        applyReferenceState(data);
         setImagegenLive(data.imagegen);
         try { await onRefresh?.(); } catch {}
         return data;
       };
-      const pollReferenceJob = async (initial) => {
+      const pollReferenceJob = async (initial, activateId = "") => {
         let job = initial;
         while (job && job.status === "running") {
           setReferenceProgress(job);
@@ -733,6 +759,10 @@ window.__ModuleLoader__.load({
         }
         if (job) setReferenceProgress(job);
         if (!job || job.status !== "done") throw new Error(job?.error || "参考库构建失败");
+        if (activateId) {
+          const activated = await requestJson("api/reference/activate", { method: "POST", body: { id: activateId } });
+          applyReferenceState(activated);
+        }
         await refreshCapabilities();
         return job;
       };
@@ -743,10 +773,12 @@ window.__ModuleLoader__.load({
           if (fileRef.current) fileRef.current.value = "";
           return;
         }
-        if (referenceLive?.ok && !window.confirm("这会替换当前参考库，旧库会保留一份备份。继续？")) {
+        if (referenceTargetDirty) {
+          setReferenceError("参考库根目录有未保存修改，请先保存设置。");
           if (fileRef.current) fileRef.current.value = "";
           return;
         }
+        const name = String(newReferenceName || "").trim() || file.name.replace(/\.pptx$/i, "");
         setReferenceBusy(true);
         setReferenceError("");
         setReferenceCheck(null);
@@ -754,33 +786,41 @@ window.__ModuleLoader__.load({
         try {
           const response = await fetch(endpoint("api/reference/upload"), {
             method: "POST",
-            headers: { "x-filename": encodeURIComponent(file.name) },
+            headers: { "x-filename": encodeURIComponent(file.name), "x-library-name": encodeURIComponent(name) },
             body: file,
           });
           const data = await response.json().catch(() => ({}));
           if (!response.ok) throw new Error(data.error || `上传失败（${response.status}）`);
-          await pollReferenceJob(data.job);
+          setNewReferenceName("");
+          await pollReferenceJob(data.job, data.library?.id || "");
         } catch (cause) {
           setReferenceError(cause.message || String(cause));
           setReferenceProgress(null);
+          void refreshReference();
         } finally {
           setReferenceBusy(false);
           if (fileRef.current) fileRef.current.value = "";
         }
       };
-      const rebuildReference = async () => {
+      const rebuildReference = async (id = activeReferenceId) => {
+        if (!id) return;
         setReferenceBusy(true);
         setReferenceError("");
         setReferenceCheck(null);
         setReferenceProgress({ stage: "starting", percent: 1, message: "准备重新构建" });
         try {
-          const response = await fetch(endpoint("api/reference/rebuild"), { method: "POST" });
+          const response = await fetch(endpoint("api/reference/rebuild"), {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ id }),
+          });
           const data = await response.json().catch(() => ({}));
           if (!response.ok) throw new Error(data.error || `重新构建失败（${response.status}）`);
           await pollReferenceJob(data.job);
         } catch (cause) {
           setReferenceError(cause.message || String(cause));
           setReferenceProgress(null);
+          void refreshReference();
         } finally {
           setReferenceBusy(false);
         }
@@ -788,18 +828,61 @@ window.__ModuleLoader__.load({
       const refreshReference = async () => {
         try {
           const data = await requestJson("api/reference/status");
-          setReferenceLive(data.reference);
+          applyReferenceState(data);
           setReferenceProgress(data.job);
         } catch (cause) {
           setReferenceError(cause.message || String(cause));
         }
       };
-      const validateReference = async () => {
+      const activateReference = async (id) => {
+        if (!id || id === activeReferenceId) return;
+        setReferenceBusy(true);
+        setReferenceError("");
+        try {
+          const data = await requestJson("api/reference/activate", { method: "POST", body: { id } });
+          applyReferenceState(data);
+          setReferenceCheck(null);
+        } catch (cause) {
+          setReferenceError(cause.message || String(cause));
+        } finally {
+          setReferenceBusy(false);
+        }
+      };
+      const renameReference = async (library) => {
+        const name = window.prompt("参考库名称", library.name);
+        if (name === null || !name.trim()) return;
+        setReferenceBusy(true);
+        setReferenceError("");
+        try {
+          const data = await requestJson(`api/reference/libraries/${encodeURIComponent(library.id)}`, { method: "PATCH", body: { name } });
+          applyReferenceState(data);
+        } catch (cause) {
+          setReferenceError(cause.message || String(cause));
+        } finally {
+          setReferenceBusy(false);
+        }
+      };
+      const deleteReference = async (library) => {
+        if (!window.confirm(`删除参考库“${library.name}”？\n会删除目录 ${library.root}，且不可恢复。`)) return;
+        setReferenceBusy(true);
+        setReferenceError("");
+        try {
+          const data = await requestJson(`api/reference/libraries/${encodeURIComponent(library.id)}`, { method: "DELETE" });
+          applyReferenceState(data);
+          setReferenceCheck(null);
+        } catch (cause) {
+          setReferenceError(cause.message || String(cause));
+        } finally {
+          setReferenceBusy(false);
+        }
+      };
+      const validateReference = async (id = activeReferenceId) => {
+        if (!id) return;
         setReferenceBusy(true);
         setReferenceError("");
         setReferenceCheck(null);
         try {
-          const data = await requestJson("api/reference/validate", { method: "POST" });
+          const data = await requestJson("api/reference/validate", { method: "POST", body: { id } });
           setReferenceCheck(data);
           await refreshReference();
         } catch (cause) {
@@ -850,7 +933,7 @@ window.__ModuleLoader__.load({
         setBusy(true);
         setError("");
         try {
-          await onSave({ projectsRoot, referenceRoot, contentMode, skills, contentPrompt, contentFallbackPrompt, renderPrompts });
+          await onSave({ projectsRoot, referencesRoot: referencesRootValue, contentMode, skills, contentPrompt, contentFallbackPrompt, renderPrompts });
         } catch (cause) {
           setError(cause.message || String(cause));
         } finally {
@@ -1027,18 +1110,65 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
       const referenceText = !referenceLive
         ? "参考库状态尚未读取。"
         : referenceLive.ok
-          ? `参考库可用 · ${referenceLive.pages} 页${builtLabel ? ` · 构建于 ${builtLabel}` : ""}`
-          : `参考库不可用：${referenceLive.error || "目录或索引缺失"}`;
-      const referenceLocation = referenceLive?.root || derivedReference;
+          ? `${referenceLive.name || "当前参考库"} · ${referenceLive.pages} 页${builtLabel ? ` · 构建于 ${builtLabel}` : ""}`
+          : referenceLive.error || "未选择参考库";
       const referenceErrors = referenceCheck?.report?.errors || [];
+      const referenceRow = (library) => h("div", {
+        key: library.id,
+        style: {
+          border: `1px solid ${library.active ? `${ACCENT}66` : SOFT_BORDER}`,
+          background: library.active ? "var(--dsw-alias-bg-layer-2, rgba(128,128,128,.07))" : "transparent",
+          borderRadius: 10,
+          padding: "10px 12px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+        },
+      },
+        h("div", { style: { ...S.row, justifyContent: "space-between", alignItems: "flex-start" } },
+          h("div", { style: { minWidth: 0 } },
+            h("div", { style: { display: "flex", alignItems: "center", gap: 6, minWidth: 0 } },
+              h("span", { style: { fontWeight: 650, fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, library.name),
+              library.active ? h("span", { style: { ...S.badge, color: ACCENT, borderColor: `${ACCENT}55`, fontSize: 10.5 } }, "当前使用") : null
+            ),
+            h("div", { style: { ...S.muted, marginTop: 3, fontSize: 11, lineHeight: 1.6 } },
+              `${library.ok ? `${library.pages} 页` : "不可用"}${library.builtAt ? ` · ${new Date(library.builtAt).toLocaleString("zh-CN", { hour12: false })}` : ""}`
+            ),
+            h("div", { style: { ...S.muted, marginTop: 2, fontFamily: MONO, fontSize: 10.5, wordBreak: "break-all" } }, library.root)
+          ),
+          h("div", { style: { ...S.row, flexWrap: "wrap", justifyContent: "flex-end" } },
+            !library.active ? h(Button, { variant: "ghost", onClick: () => void activateReference(library.id), disabled: referenceBusy || !library.ok || referenceTargetDirty }, "切换") : null,
+            h(Button, { variant: "ghost", onClick: () => void rebuildReference(library.id), disabled: referenceBusy || referenceTargetDirty }, "重新构建"),
+            h(Button, { variant: "ghost", onClick: () => void validateReference(library.id), disabled: referenceBusy || referenceTargetDirty }, "校验"),
+            h(Button, { variant: "ghost", onClick: () => void renameReference(library), disabled: referenceBusy }, "重命名"),
+            !library.active ? h(Button, { variant: "ghost", onClick: () => void deleteReference(library), disabled: referenceBusy, style: { color: "#d9534f" } }, "删除") : null
+          )
+        )
+      );
       const referenceTab = [
         h("div", { style: { ...S.muted, marginBottom: 14, fontSize: 12, lineHeight: 1.7 } },
-          "参考库是一份可检索的页面参考集：上传参考 PPTX 后，系统生成页面图、索引和风格 token，供页面生成时检索与对照。"
+          "参考库是共享的页面参考集，同一时间只有一个当前库。新建库不会覆盖已有库；切换只影响之后运行的排版技能。"
         ),
         h("div", { style: promptCard },
-          sectionHeader("参考稿", h("div", { style: { ...S.muted, fontSize: 11 } }, referenceText),
-            "支持 .pptx。构建需要 LibreOffice 和 Python 依赖，通常需要几分钟；构建期间不要关闭设置。"),
-          h("div", { style: { ...S.row, flexWrap: "wrap" } },
+          sectionHeader("当前参考库", h("div", { style: { ...S.muted, fontSize: 11 } }, referenceText)),
+          referenceTargetDirty ? h("div", { style: { ...S.muted, marginBottom: 10, color: "#d9534f", fontSize: 11, lineHeight: 1.7 } },
+            "项目根目录或参考库根目录有未保存修改；先在“其他设置”保存，再上传、切换或重建。"
+          ) : null,
+          h("div", { style: { display: "flex", flexDirection: "column", gap: 8 } },
+            referenceLibraries.length
+              ? referenceLibraries.map(referenceRow)
+              : h(Empty, { text: "还没有参考库。在下面新建第一个库。" })
+          )
+        ),
+        h("div", { style: promptCard },
+          sectionHeader("新建参考库", h("div", { style: { ...S.muted, fontSize: 11 } }, referenceLibraries.length ? "" : "第一个库构建成功后会自动设为当前库")),
+          h("div", { style: { ...S.row, alignItems: "stretch", marginBottom: 8 } },
+            h("input", {
+              style: { ...S.input, flex: "1 1 240px" },
+              value: newReferenceName,
+              onChange: (event) => setNewReferenceName(event.target.value),
+              placeholder: "参考库名称，例如：方案排版参考",
+            }),
             h("input", {
               ref: fileRef,
               type: "file",
@@ -1046,9 +1176,10 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
               style: { display: "none" },
               onChange: (event) => void uploadReference(event.target.files?.[0]),
             }),
-            h(Button, { variant: "primary", onClick: () => fileRef.current?.click(), disabled: referenceBusy || referenceTargetDirty }, referenceBusy ? "构建中…" : referenceLive?.ok ? "更换参考稿" : "上传参考稿"),
-            referenceLive?.ok ? h(Button, { variant: "ghost", onClick: () => void rebuildReference(), disabled: referenceBusy || referenceTargetDirty }, "重新构建") : null,
-            h(Button, { variant: "ghost", onClick: () => void validateReference(), disabled: referenceBusy || referenceTargetDirty }, referenceBusy ? "校验中…" : "校验")
+            h(Button, { variant: "primary", onClick: () => fileRef.current?.click(), disabled: referenceBusy || referenceTargetDirty }, referenceBusy ? "构建中…" : "选择 PPTX 并构建")
+          ),
+          h("div", { style: { ...S.muted, fontSize: 11, lineHeight: 1.7 } },
+            "支持 .pptx。构建需要 LibreOffice 和 Python，通常需要几分钟；构建期间不要关闭设置。"
           ),
           referenceCheck ? h("div", {
             style: {
@@ -1065,31 +1196,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
             !referenceCheck.ok && referenceErrors.length
               ? h("div", { style: { marginTop: 4 } }, `${referenceErrors.slice(0, 5).join("；")}${referenceErrors.length > 5 ? "；…" : ""}`)
               : null
-          ) : null,
-          referenceTargetDirty ? h("div", { style: { ...S.muted, marginTop: 8, color: "#d9534f", fontSize: 11, lineHeight: 1.7 } },
-            "项目根目录或参考库覆盖路径有未保存修改；先在“其他设置”保存，再上传或重建。"
           ) : null
-        ),
-        h("div", { style: promptCard },
-          sectionHeader("参考库位置", h(Button, { variant: "ghost", onClick: () => void copyValue(referenceLocation) }, "复制路径"),
-            `自动管理；默认位置 ${derivedReference}。同一项目根下重建会更新同一路径的内容和构建时间，路径本身不变。`),
-          h("div", { style: { ...S.pre, margin: 0, padding: "8px 10px", fontFamily: MONO, fontSize: 11, whiteSpace: "pre-wrap", wordBreak: "break-all" } }, referenceLocation)
-        ),
-        h("div", { style: promptCard },
-          sectionHeader("使用已有参考库", null,
-            "正常上传不需要填。只有你已有一份参考库、或参考库在特殊位置时才填；上传/重新构建会覆盖这里指向的库。"),
-          h(Field, { label: "参考库目录（留空 = 使用上面的自动位置）", style: { marginBottom: 0 } },
-            h("div", { style: { ...S.row, alignItems: "stretch" } },
-              h("input", {
-                style: { ...S.input, flex: "1 1 auto" },
-                value: referenceRoot,
-                onChange: (event) => setReferenceRoot(event.target.value),
-                placeholder: "<已有参考库绝对路径；正常上传不需要填>",
-              }),
-              h(Button, { onClick: () => void pickReference() }, "选择目录"),
-              h(Button, { variant: "ghost", onClick: () => void copyValue(referenceRoot) }, "复制")
-            )
-          )
         ),
         referenceProgress ? h("div", { style: promptCard },
           h("div", { style: { ...S.row, justifyContent: "space-between", marginBottom: 8 } },
@@ -1104,7 +1211,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
         ) : null,
         referenceError ? h("div", { style: { color: "#d9534f", fontSize: 12, marginBottom: 12 } }, referenceError) : null,
         h("div", { style: { ...S.muted, fontSize: 11, lineHeight: 1.7 } },
-          "参考库是共享的，不是每个项目各建一份。上传新稿会替换当前库；旧库会保留备份。"
+          `参考库根目录：${referencesRootValue || derivedReferencesRoot}。切换参考库不需要重启 DSH。`
         ),
       ];
       const imagegenText = !imagegenLive
@@ -1117,7 +1224,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
       const advancedContent = [
         h("div", { style: promptCard },
           sectionHeader("项目根目录", null,
-            `只影响新建项目；已有项目不会迁移。参考库默认建在 ${derivedReference}。保存后需要重启 DSH，工作台才会按新根目录扫描。`),
+            "只影响新建项目；已有项目不会迁移。保存后需要重启 DSH，工作台才会按新根目录扫描。"),
           h(Field, { label: "保存后重启 DSH 生效", style: { marginBottom: 0 } },
             h("div", { style: { ...S.row, alignItems: "stretch" } },
               h("input", {
@@ -1132,6 +1239,22 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
           )
         ),
         h("div", { style: promptCard },
+          sectionHeader("参考库根目录", null,
+            `参考库放在项目根目录同级，默认 ${derivedReferencesRoot}。修改后只影响新建库；已有库注册路径不变。`),
+          h(Field, { label: "参考库根目录", style: { marginBottom: 0 } },
+            h("div", { style: { ...S.row, alignItems: "stretch" } },
+              h("input", {
+                style: { ...S.input, flex: "1 1 auto" },
+                value: referencesRootValue,
+                onChange: (event) => setReferencesRootValue(event.target.value),
+                placeholder: "<参考库根绝对路径；留空使用默认位置>",
+              }),
+              h(Button, { onClick: () => void pickReference() }, "选择目录"),
+              h(Button, { variant: "ghost", onClick: () => void copyValue(referencesRootValue || derivedReferencesRoot) }, "复制")
+            )
+          )
+        ),
+        h("div", { style: promptCard },
           sectionHeader("图片生成能力",
             h(Button, { variant: "ghost", onClick: () => void checkImagegen(), disabled: imagegenChecking }, imagegenChecking ? "检测中…" : "重新检测"),
             "检测只做提示，不阻止图片按钮。生成时实际调用；工具缺失会正常报错。"),
@@ -1139,7 +1262,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
         ),
         h("div", { style: promptCard },
           sectionHeader("诊断与重置", null,
-            "当前插件 v0.1.41。参考库状态和内容技能状态会随保存刷新。"),
+            "当前插件 v0.1.42。参考库状态和内容技能状态会随保存刷新。"),
           h("div", { style: { ...S.row, flexWrap: "wrap" } },
             h(Button, { variant: "ghost", onClick: () => void refreshCapabilities() }, "刷新能力状态"),
             h(Button, { variant: "ghost", onClick: resetPrompts }, "恢复默认提示词")

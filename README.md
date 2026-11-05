@@ -2,7 +2,7 @@
 
 DSH（DeepSeek Harness）方案工作台插件：把项目文件、内容对话、逐页文案、参考库和页面产物放进同一个工作台。内容生成、文案确认、页面生成、版本回看都在一个项目里完成，适合需要反复打磨的企业培训方案、汇报材料和 PPT 页面。
 
-> 当前版本：**0.1.41** · License：MIT
+> 当前版本：**0.1.42** · License：MIT
 
 ## 它解决什么问题
 
@@ -41,10 +41,11 @@ DSH（DeepSeek Harness）方案工作台插件：把项目文件、内容对话�
 
 ### 参考库
 
-- 参考库独立于项目，默认位于 `<项目根>/_reference`
+- 参考库独立于项目，默认与 `<项目根>` 同级的 `references` 目录
+- 可以保存多个参考库，分别放在 `references/<库名>`，同一时间只激活一个
 - 上传任意参考 PPTX 后，后台构建页面图、检索索引、几何签名和风格 token
-- 三个排版技能在运行时读取同一份参考库，不把参考稿打进插件
-- 支持更换、重新构建、校验，以及使用已有的参考库目录
+- 三个排版技能在运行时读取当前激活库，不把参考稿打进插件
+- 支持新建、切换、重命名、删除、重新构建和校验
 - 参考库可能包含客户资料，不会被提交到仓库或打进安装包
 
 ### 所见即所得的提示词设置
@@ -88,7 +89,7 @@ dsh plugin --profile <你的 profile> add <本仓库地址>
 4. 创建后进入项目内容对话，生成框架和蓝图；
 5. 确认蓝图，逐页生成 `content/pages/P01.md` 等文案；
 6. 回到工作台，选页预览文案，按需生成 PPTX / HTML / 图片；
-7. 在设置里上传参考 PPTX，构建一次参考库。
+7. 在设置里上传参考 PPTX，构建并激活第一个参考库。
 
 ## 设置
 
@@ -103,16 +104,16 @@ dsh plugin --profile <你的 profile> add <本仓库地址>
 
 ### 参考库
 
-- 上传 `.pptx` 参考稿
-- 后台构建，显示进度和状态
-- 显示页数、位置和构建时间
-- 支持重新构建和校验
-- “使用已有参考库”可以指向已有目录
+- 新建参考库：填写库名，上传 `.pptx`
+- 每个库独立保存页面图、索引、manifest 和构建时间
+- 列表里切换当前库；同一时间只有一个当前库
+- 支持重命名、删除、重新构建和校验
+- 旧版 `projects/_reference` 会在升级时自动登记并迁移到 `references/方案排版参考` 或 `references/参考库`
 
 ### 其他设置
 
 - 项目根目录
-- 参考库派生路径
+- 参考库根目录（默认与 `projects` 同级）
 - 图片生成能力检测和重新检测
 - 刷新能力状态
 - 恢复默认提示词
@@ -121,9 +122,11 @@ dsh plugin --profile <你的 profile> add <本仓库地址>
 
 ```text
 ~/.dsh/storages/deck-workbench/settings.json
+~/.dsh/storages/deck-workbench/references.json   # 参考库注册表
+~/.dsh/storages/deck-workbench/reference.json    # 当前激活库指针
 ```
 
-修改项目根目录后需要重启 DSH；只影响新建项目，已有项目不迁移。
+修改项目根目录后需要重启 DSH；只影响新建项目，已有项目不迁移。参考库根目录修改后只影响新建库，已有库仍按注册路径读取。
 
 ## 目录结构
 
@@ -142,6 +145,7 @@ dsh-deck-workbench/
 │   ├── projects.js
 │   ├── history.js
 │   ├── settings.js
+│   ├── references.js
 │   ├── preview.js
 │   └── http.js
 ├── locale/
@@ -154,6 +158,32 @@ dsh-deck-workbench/
 ```
 
 `dev-docs/` 是本地开发资料，不属于公开仓库，也不会进入安装包。
+
+## 参考库目录
+
+```text
+DeckWorkbench/
+├── projects/
+│   └── <project-id>/
+└── references/
+    ├── 方案排版参考/
+    ├── MBB 2026/
+    └── ...
+```
+
+每个参考库内部结构一致：
+
+```text
+references/<库名>/
+├── library.json
+├── manifest.json
+├── assets/
+│   └── pages/
+└── references/
+    └── index.jsonl
+```
+
+同一时间只有一个当前库；切换当前库只更新 `reference.json`，所有排版技能立即读取新库。
 
 ## 产物与项目目录
 
@@ -185,6 +215,7 @@ dsh-deck-workbench/
 ## 已知限制
 
 - 项目根目录修改后需要重启 DSH 生效，只影响新建项目
+- 多参考库是全局单活：切换后影响所有项目，暂不支持项目级覆盖
 - 内容会话依赖宿主 workspace 服务
 - PPTX 预览依赖本机 LibreOffice；转换失败时提供原文件下载
 - 工作台未运行时发生的文案修改可能漏记历史；启动时会补当前版本
