@@ -40,5 +40,8 @@
       "platform": "web",
       "inject": []
     }
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js"
   }
 }
