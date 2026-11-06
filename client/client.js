@@ -607,7 +607,7 @@ window.__ModuleLoader__.load({
       const header = h("div", { style: S.top },
         h("div", { style: { flex: "1 1 auto", minWidth: 180 } },
           h("div", { style: S.h1 }, "方案工作台"),
-          h("div", { style: S.muted }, "开发者：圣婴 | 微信：say007go | 版本号：0.1.45")
+          h("div", { style: S.muted }, "开发者：圣婴 | 微信：say007go | 版本号：0.1.46")
         ),
         h(Button, { onClick: () => setNewOpen(true), variant: "primary" }, "新建项目"),
         h(Button, { onClick: () => setSettingsOpen(true) }, "设置"),
@@ -959,6 +959,31 @@ window.__ModuleLoader__.load({
       );
       const promptText = { ...S.pre, margin: 0, padding: 10, border: `1px solid ${SOFT_BORDER}`, borderRadius: 8, fontFamily: MONO, fontSize: 12, lineHeight: 1.7, whiteSpace: "pre-wrap" };
       const promptInput = { ...S.input, fontFamily: "inherit", fontSize: 13, lineHeight: 1.65, resize: "vertical" };
+      const promptDoc = {
+        border: `1px solid ${SOFT_BORDER}`,
+        borderRadius: 10,
+        padding: "12px 14px",
+        background: "var(--dsw-alias-bg-base, rgba(128,128,128,.035))",
+        fontSize: 13,
+        lineHeight: 1.8,
+      };
+      const promptFixedLine = { ...S.muted, fontSize: 12, lineHeight: 1.75, whiteSpace: "pre-wrap" };
+      const inlineSkillInput = {
+        ...S.input,
+        display: "inline-block",
+        width: 100,
+        minWidth: 80,
+        maxWidth: "60%",
+        padding: "2px 4px",
+        margin: "0 2px",
+        border: "none",
+        borderBottom: `1px dashed ${SOFT_BORDER}`,
+        borderRadius: 0,
+        background: "transparent",
+        fontFamily: MONO,
+        fontSize: 12.5,
+        verticalAlign: "baseline",
+      };
       const examples = {
         pptx: { file: "renders/pptx/P02.pptx", skill: "ppt-layout", note: DEFAULT_TARGET_NOTES.pptx },
         image: { file: "renders/image/P02.png", skill: "image-layout", note: DEFAULT_TARGET_NOTES.image },
@@ -975,10 +1000,13 @@ window.__ModuleLoader__.load({
           }, label)
         )
       );
-      const contentPreview = DEFAULT_START_INSTRUCTION.replace(/page-content/g, String(skills.content || "").trim() || "page-content");
-      const fallbackPreview = String(contentFallbackPrompt || "").trim() || DEFAULT_CONTENT_INSTRUCTION.join("\n");
-      const contentSkillText = !String(skills.content || "").trim()
-        ? "未填写内容技能；发送时会使用内置提示词。"
+      const contentSkillName = String(skills.content || "").trim();
+      const contentSkillParts = DEFAULT_START_INSTRUCTION.split("page-content");
+      const contentSkillPrefix = contentSkillParts[0] || "";
+      const contentSkillSuffix = contentSkillParts.slice(1).join("page-content");
+      const useSkillPrompt = contentMode === "skill" && !!contentSkillName;
+      const contentSkillText = !contentSkillName
+        ? "未填写内容技能；当前实际发送使用内置提示词。"
         : contentSkillStatus?.checking
           ? "检测中…"
           : contentSkillStatus?.available === true
@@ -986,74 +1014,69 @@ window.__ModuleLoader__.load({
             : contentSkillStatus?.available === false
               ? `未检测到该技能；仍会按你的选择发送带技能提示词，可能失败${contentSkillStatus.reason ? `（${contentSkillStatus.reason}）` : ""}。`
               : "尚未检测；可点击检测确认技能是否可用。";
-      const contentSkillName = String(skills.content || "").trim();
-      const useSkillPrompt = contentMode === "skill" && !!contentSkillName;
-      const selectedPromptLines = useSkillPrompt ? contentPreview.split("\n") : fallbackPreview.split("\n");
-      const selectedPromptNote = contentMode === "skill" && !contentSkillName
-        ? ["注意：未填写内容技能，已使用内置提示词。"]
-        : [];
-      const contentRequirementLines = String(contentPrompt || "").trim()
-        ? ["内容要求：", contentPrompt]
-        : [];
-      const composedStartPrompt = [
-        "项目目录：<项目根>",
-        "需求文件：content/brief.md，需求附件在 content/input/。",
-        ...selectedPromptLines,
-        ...selectedPromptNote,
-        ...contentRequirementLines,
-      ].join("\n");
       const contentTab = [
         h("div", { style: promptCard },
           moduleTitle("内容生成", { marginBottom: 6 }),
           h("div", { style: { ...S.muted, marginBottom: 10, fontSize: 12, lineHeight: 1.7 } },
-            "新建项目或空白页首次打开时发送。只选一种：调用内容技能，或不调用内容技能。"
+            "新建项目或空白页首次打开时发送。下面这块就是实际发送内容；项目目录在运行时自动填入。"
           ),
-          h("div", { style: { ...S.row, flexWrap: "wrap" } },
+          h("div", { style: { ...S.row, flexWrap: "wrap", marginBottom: 12 } },
             [["skill", "调用内容技能"], ["builtin", "不调用内容技能"]].map(([key, label]) => h(Button, {
               key,
               variant: contentMode === key ? "primary" : "ghost",
               onClick: () => setContentMode(key),
             }, label))
           ),
-          contentMode === "skill" ? h("div", { style: { marginTop: 12 } },
-            h(Field, { label: "内容技能" },
-              h("div", { style: { ...S.row, alignItems: "stretch" } },
+          h("div", { style: promptDoc },
+            h("div", { style: promptFixedLine }, "项目目录：<项目根>"),
+            h("div", { style: promptFixedLine }, "需求文件：content/brief.md，需求附件在 content/input/。"),
+            contentMode === "skill" ? h("div", { style: { marginTop: 8 } },
+              h("div", { style: { whiteSpace: "pre-wrap", fontSize: 13, lineHeight: 1.8 } },
+                contentSkillPrefix,
                 h("input", {
-                  style: { ...S.input, flex: "1 1 260px", minWidth: 0, width: "auto" },
+                  style: inlineSkillInput,
                   value: skills.content || "",
                   onChange: (event) => updateSkill("content", event.target.value),
-                  placeholder: "page-content",
+                  placeholder: "技能名",
+                  "aria-label": "内容技能",
                 }),
-                h(Button, { variant: "ghost", onClick: () => void checkContentSkill(), disabled: contentSkillStatus?.checking }, contentSkillStatus?.checking ? "检测中…" : "检测")
+                contentSkillSuffix
+              ),
+              h("div", { style: { ...S.row, flexWrap: "wrap", marginTop: 4 } },
+                h(Button, { variant: "ghost", onClick: () => void checkContentSkill(), disabled: contentSkillStatus?.checking }, contentSkillStatus?.checking ? "检测中…" : "检测"),
+                h("span", { style: { ...S.muted, fontSize: 11, lineHeight: 1.7, color: contentSkillStatus?.available === false ? "#d9534f" : MUTED } }, contentSkillText)
               )
-            ),
-            h("div", { style: { ...S.muted, marginTop: 4, fontSize: 11, lineHeight: 1.7, color: contentSkillStatus?.available === false ? "#d9534f" : MUTED } }, contentSkillText)
-          ) : h("div", { style: { marginTop: 12 } },
-            h("div", { style: { ...S.row, justifyContent: "space-between", marginBottom: 6 } },
-              h("div", { style: S.label }, "内置提示词"),
-              h(Button, { variant: "ghost", onClick: () => setContentFallbackPrompt(DEFAULT_CONTENT_INSTRUCTION.join("\n")) }, "恢复默认")
-            ),
-            h("textarea", {
-              style: { ...promptInput, minHeight: 120 },
-              value: contentFallbackPrompt,
-              onChange: (event) => setContentFallbackPrompt(event.target.value),
-            })
-          ),
-          h("div", { style: { ...S.row, justifyContent: "space-between", marginTop: 12, marginBottom: 6 } },
-            h("div", { style: S.label }, "内容要求（两类共用）"),
-            h(Button, { variant: "ghost", onClick: () => setContentPrompt(DEFAULT_CONTENT_PROMPT) }, "恢复默认")
-          ),
-          h("textarea", {
-            style: { ...promptInput, minHeight: 75 },
-            value: contentPrompt,
-            onChange: (event) => setContentPrompt(event.target.value),
-          }),
-          h("div", { style: { marginTop: 14, paddingTop: 12, borderTop: `1px solid ${BORDER}` } },
-            h("div", { style: S.h2 }, "实际发送的提示词"),
-            h("div", { style: { ...S.muted, margin: "4px 0 8px", fontSize: 11, lineHeight: 1.7 } },
-              "项目目录在运行时自动填入；下面就是对话里发送的完整内容。"
-            ),
-            h("pre", { style: { ...promptText, minHeight: 150 } }, composedStartPrompt)
+            ) : null,
+            !useSkillPrompt ? h("div", { style: { marginTop: 10 } },
+              h("div", { style: { ...S.row, justifyContent: "space-between", marginBottom: 6 } },
+                h("div", { style: S.label }, contentMode === "skill" ? "内置提示词（当前实际发送）" : "内置提示词"),
+                h(Button, { variant: "ghost", onClick: () => setContentFallbackPrompt(DEFAULT_CONTENT_INSTRUCTION.join("\n")) }, "恢复默认")
+              ),
+              h("textarea", {
+                style: { ...promptInput, minHeight: 120, background: "var(--dsw-alias-bg-base, rgba(128,128,128,.04))" },
+                value: contentFallbackPrompt,
+                placeholder: DEFAULT_CONTENT_INSTRUCTION.join("\n"),
+                onChange: (event) => setContentFallbackPrompt(event.target.value),
+              }),
+              contentMode === "skill" && !contentSkillName ? h("div", { style: { ...promptFixedLine, marginTop: 6, color: "#d9534f" } },
+                "注意：未填写内容技能，已使用内置提示词。"
+              ) : null
+            ) : null,
+            h("div", { style: { marginTop: 12, paddingTop: 10, borderTop: `1px solid ${BORDER}` } },
+              h("div", { style: { ...S.row, justifyContent: "space-between", marginBottom: 6 } },
+                h("div", { style: { display: "flex", alignItems: "baseline", gap: 6 } },
+                  h("div", { style: S.label }, "内容要求："),
+                  h("span", { style: { ...S.muted, fontSize: 10.5 } }, "两类共用")
+                ),
+                h(Button, { variant: "ghost", onClick: () => setContentPrompt(DEFAULT_CONTENT_PROMPT) }, "恢复默认")
+              ),
+              h("textarea", {
+                style: { ...promptInput, minHeight: 75, background: "var(--dsw-alias-bg-base, rgba(128,128,128,.04))" },
+                value: contentPrompt,
+                placeholder: "留空则不发送内容要求段落",
+                onChange: (event) => setContentPrompt(event.target.value),
+              })
+            )
           )
         ),
         h("div", { style: promptCard },
@@ -1244,7 +1267,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
         ),
         h("div", { style: promptCard },
           sectionHeader("诊断与重置", null,
-            "当前插件 v0.1.45。参考库状态和内容技能状态会随保存刷新。"),
+            "当前插件 v0.1.46。参考库状态和内容技能状态会随保存刷新。"),
           h("div", { style: { ...S.row, flexWrap: "wrap" } },
             h(Button, { variant: "ghost", onClick: () => void refreshCapabilities() }, "刷新能力状态"),
             h(Button, { variant: "ghost", onClick: resetPrompts }, "恢复默认提示词")
