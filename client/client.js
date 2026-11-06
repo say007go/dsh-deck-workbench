@@ -607,7 +607,7 @@ window.__ModuleLoader__.load({
       const header = h("div", { style: S.top },
         h("div", { style: { flex: "1 1 auto", minWidth: 180 } },
           h("div", { style: S.h1 }, "方案工作台"),
-          h("div", { style: S.muted }, "开发者：圣婴 | 微信：say007go | 版本号：0.1.44")
+          h("div", { style: S.muted }, "开发者：圣婴 | 微信：say007go | 版本号：0.1.45")
         ),
         h(Button, { onClick: () => setNewOpen(true), variant: "primary" }, "新建项目"),
         h(Button, { onClick: () => setSettingsOpen(true) }, "设置"),
@@ -1103,18 +1103,26 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
           )
         ),
       ];
-      const builtLabel = referenceLive?.builtAt
-        ? new Date(referenceLive.builtAt).toLocaleString("zh-CN", { hour12: false })
-        : "";
-      const activeLibraryName = referenceLive?.name
-        || referenceLibraries.find((item) => item.active)?.name
-        || "当前参考库";
-      const referenceText = !referenceLive
-        ? "参考库状态尚未读取。"
-        : referenceLive.ok
-          ? `${activeLibraryName} · ${referenceLive.pages} 页${builtLabel ? ` · 构建于 ${builtLabel}` : ""}`
-          : referenceLive.error || "未选择参考库";
+      const librarySummary = referenceLibraries.length
+        ? `共 ${referenceLibraries.length} 个库`
+        : "未配置参考库";
       const referenceErrors = referenceCheck?.report?.errors || [];
+      const referenceCheckBox = (library) => referenceCheck?.reference?.id === library.id ? h("div", {
+        style: {
+          marginTop: 2,
+          padding: "8px 10px",
+          borderRadius: 8,
+          border: `1px solid ${referenceCheck.ok ? "#2f8f5b" : "#d9534f"}55`,
+          color: referenceCheck.ok ? "#2f8f5b" : "#d9534f",
+          fontSize: 11,
+          lineHeight: 1.7,
+        },
+      },
+        h("div", null, referenceCheck.ok ? "校验通过：参考库结构、索引和页面图一致。" : `校验未通过：${referenceErrors.length} 项问题。`),
+        !referenceCheck.ok && referenceErrors.length
+          ? h("div", { style: { marginTop: 4 } }, `${referenceErrors.slice(0, 5).join("；")}${referenceErrors.length > 5 ? "；…" : ""}`)
+          : null
+      ) : null;
       const referenceRow = (library) => h("div", {
         key: library.id,
         style: {
@@ -1145,14 +1153,15 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
             h(Button, { variant: "ghost", onClick: () => void renameReference(library), disabled: referenceBusy }, "重命名"),
             !library.active ? h(Button, { variant: "ghost", onClick: () => void deleteReference(library), disabled: referenceBusy, style: { color: "#d9534f" } }, "删除") : null
           ) : null
-        )
+        ),
+        referenceCheckBox(library)
       );
       const referenceTab = [
         h("div", { style: { ...S.muted, marginBottom: 14, fontSize: 12, lineHeight: 1.7 } },
           "参考库是共享的页面参考集，同一时间只有一个当前库。新建库不会覆盖已有库；切换只影响之后运行的排版技能。"
         ),
         h("div", { style: promptCard },
-          sectionHeader("当前参考库", h("div", { style: { ...S.muted, fontSize: 11 } }, referenceText)),
+          sectionHeader("当前参考库", h("div", { style: { ...S.muted, fontSize: 11 } }, librarySummary)),
           referenceTargetDirty ? h("div", { style: { ...S.muted, marginBottom: 10, color: "#d9534f", fontSize: 11, lineHeight: 1.7 } },
             "项目根目录有未保存修改；先在“其他设置”保存，再上传、切换或重建。"
           ) : null,
@@ -1161,23 +1170,6 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
               ? referenceLibraries.map(referenceRow)
               : h(Empty, { text: multiLibraryReady ? "还没有参考库。在下面新建第一个库。" : "当前 DSH 宿主还没有加载多参考库接口。" })
           ),
-          referenceCheck ? h("div", {
-            style: {
-              marginTop: 10,
-              padding: "8px 10px",
-              borderRadius: 8,
-              border: `1px solid ${referenceCheck.ok ? "#2f8f5b" : "#d9534f"}55`,
-              color: referenceCheck.ok ? "#2f8f5b" : "#d9534f",
-              fontSize: 11,
-              lineHeight: 1.7,
-            },
-          },
-            h("div", { style: { fontWeight: 600 } }, `校验结果：${referenceCheck.reference?.name || "参考库"}`),
-            h("div", null, referenceCheck.ok ? "校验通过：参考库结构、索引和页面图一致。" : `校验未通过：${referenceErrors.length} 项问题。`),
-            !referenceCheck.ok && referenceErrors.length
-              ? h("div", { style: { marginTop: 4 } }, `${referenceErrors.slice(0, 5).join("；")}${referenceErrors.length > 5 ? "；…" : ""}`)
-              : null
-          ) : null
         ),
         multiLibraryReady ? h("div", { style: promptCard },
           sectionHeader("新建参考库", h("div", { style: { ...S.muted, fontSize: 11 } }, referenceLibraries.length ? "" : "第一个库构建成功后会自动设为当前库")),
@@ -1228,7 +1220,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
         h("div", { style: promptCard },
           sectionHeader("项目根目录", null,
             "只影响新建项目；已有项目不会迁移。保存后需要重启 DSH，工作台才会按新根目录扫描。"),
-          h(Field, { label: "保存后重启 DSH 生效", style: { marginBottom: 0 } },
+          h(Field, { label: "项目根目录路径", style: { marginBottom: 0 } },
             h("div", { style: { ...S.row, alignItems: "stretch" } },
               h("input", {
                 style: { ...S.input, flex: "1 1 auto" },
@@ -1239,6 +1231,9 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
               h(Button, { onClick: () => void pickRoot() }, "选择目录"),
               h(Button, { variant: "ghost", onClick: () => void copyValue(projectsRoot) }, "复制")
             )
+          ),
+          h("div", { style: { ...S.muted, marginTop: 8, fontSize: 11, lineHeight: 1.7 } },
+            "保存后重启 DSH 生效；只影响新建项目和新建参考库，已有项目/参考库不会迁移。"
           )
         ),
         h("div", { style: promptCard },
@@ -1249,7 +1244,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
         ),
         h("div", { style: promptCard },
           sectionHeader("诊断与重置", null,
-            "当前插件 v0.1.44。参考库状态和内容技能状态会随保存刷新。"),
+            "当前插件 v0.1.45。参考库状态和内容技能状态会随保存刷新。"),
           h("div", { style: { ...S.row, flexWrap: "wrap" } },
             h(Button, { variant: "ghost", onClick: () => void refreshCapabilities() }, "刷新能力状态"),
             h(Button, { variant: "ghost", onClick: resetPrompts }, "恢复默认提示词")
