@@ -607,7 +607,7 @@ window.__ModuleLoader__.load({
       const header = h("div", { style: S.top },
         h("div", { style: { flex: "1 1 auto", minWidth: 180 } },
           h("div", { style: S.h1 }, "方案工作台"),
-          h("div", { style: S.muted }, "开发者：圣婴 | 微信：say007go | 版本号：0.1.48")
+          h("div", { style: S.muted }, "开发者：圣婴 | 微信：say007go | 版本号：0.1.49")
         ),
         h(Button, { onClick: () => setNewOpen(true), variant: "primary" }, "新建项目"),
         h(Button, { onClick: () => setSettingsOpen(true) }, "设置"),
@@ -955,7 +955,20 @@ window.__ModuleLoader__.load({
         ),
         hint ? h("div", { style: { ...S.muted, marginTop: 4, fontSize: 11, lineHeight: 1.7 } }, hint) : null
       );
-      const promptText = { ...S.pre, margin: 0, padding: 10, border: `1px solid ${SOFT_BORDER}`, borderRadius: 8, fontFamily: "inherit", fontSize: 12.5, lineHeight: 1.8, whiteSpace: "pre-wrap" };
+      const readonlyPrompt = {
+        ...S.pre,
+        margin: 0,
+        padding: "0 0 0 10px",
+        borderLeft: `2px solid ${SOFT_BORDER}`,
+        background: "transparent",
+        color: MUTED,
+        fontFamily: "inherit",
+        fontSize: 12.5,
+        lineHeight: 1.8,
+        whiteSpace: "pre-wrap",
+      };
+      const readonlyLabel = { display: "flex", alignItems: "center", gap: 6, marginBottom: 6 };
+      const readonlyBadge = { ...S.badge, fontSize: 9.5, padding: "1px 6px" };
       const promptInput = { ...S.input, fontFamily: "inherit", fontSize: 12.5, lineHeight: 1.8, resize: "vertical" };
       const promptDoc = {
         border: `1px solid ${SOFT_BORDER}`,
@@ -1035,17 +1048,18 @@ window.__ModuleLoader__.load({
       const inlineSkillInput = {
         ...S.input,
         display: "inline-block",
-        width: 100,
-        minWidth: 80,
+        width: 112,
+        minWidth: 88,
         maxWidth: "60%",
-        padding: "2px 4px",
+        padding: "2px 6px",
         margin: "0 2px",
-        border: "none",
-        borderBottom: `1px dashed ${SOFT_BORDER}`,
-        borderRadius: 0,
-        background: "transparent",
+        border: `1px solid ${SOFT_BORDER}`,
+        borderBottomColor: `${ACCENT}88`,
+        borderRadius: 5,
+        background: "var(--dsw-alias-bg-base, rgba(128,128,128,.06))",
         fontFamily: "inherit",
         fontSize: 12.5,
+        lineHeight: 1.5,
         verticalAlign: "baseline",
       };
       const examples = {
@@ -1080,9 +1094,13 @@ window.__ModuleLoader__.load({
           h("div", { style: { ...S.muted, marginBottom: 10, fontSize: 12, lineHeight: 1.7 } },
             "新建项目或空白页首次打开时发送。下面这块就是实际发送内容；项目目录在运行时自动填入。"
           ),
-          h("div", { style: { marginBottom: 12 } },
+          h("div", { style: { marginBottom: 10 } },
             renderSegmented([["skill", "调用内容技能"], ["builtin", "不调用内容技能"]], contentMode, setContentMode, "内容生成方式")
           ),
+          contentMode === "skill" ? h("div", { style: { ...S.row, flexWrap: "wrap", gap: 8, marginBottom: 10 } },
+            h(Button, { variant: "ghost", onClick: () => void checkContentSkill(), disabled: contentSkillStatus?.checking }, contentSkillStatus?.checking ? "检测中…" : "检测技能"),
+            h("span", { style: { ...S.muted, fontSize: 11, lineHeight: 1.7, color: contentSkillStatus?.available === false ? "#d9534f" : MUTED } }, contentSkillText)
+          ) : null,
           h("div", { style: promptDoc },
             h("div", { style: promptDocHead },
               h("div", { style: { fontSize: 11, color: MUTED, letterSpacing: ".02em" } }, "实际发送内容"),
@@ -1095,20 +1113,17 @@ window.__ModuleLoader__.load({
             h("div", { style: promptFixedLine }, "项目目录：<项目根>"),
             h("div", { style: promptFixedLine }, "需求文件：content/brief.md，需求附件在 content/input/。"),
             contentMode === "skill" ? h("div", { style: { marginTop: 8 } },
-              h("div", { style: { whiteSpace: "pre-wrap", fontSize: 13, lineHeight: 1.8 } },
+              h("div", { style: { whiteSpace: "pre-wrap", color: MUTED, fontSize: 12.5, lineHeight: 1.8 } },
                 contentSkillPrefix,
                 h("input", {
                   style: inlineSkillInput,
                   value: skills.content || "",
                   onChange: (event) => updateSkill("content", event.target.value),
                   placeholder: "技能名",
+                  title: "点击修改内容技能",
                   "aria-label": "内容技能",
                 }),
                 contentSkillSuffix
-              ),
-              h("div", { style: { ...S.row, flexWrap: "wrap", marginTop: 4 } },
-                h(Button, { variant: "ghost", onClick: () => void checkContentSkill(), disabled: contentSkillStatus?.checking }, contentSkillStatus?.checking ? "检测中…" : "检测"),
-                h("span", { style: { ...S.muted, fontSize: 11, lineHeight: 1.7, color: contentSkillStatus?.available === false ? "#d9534f" : MUTED } }, contentSkillText)
               )
             ) : null,
             !useSkillPrompt ? h("div", { style: { marginTop: 10 } },
@@ -1146,7 +1161,11 @@ window.__ModuleLoader__.load({
         ),
         h("div", { style: promptCard },
           moduleTitle("优化此页", { marginBottom: 8 }),
-          h("pre", { style: promptText }, `项目目录：<项目根>/project-example
+          h("div", { style: readonlyLabel },
+            h("span", { style: { ...S.muted, fontSize: 10.5, letterSpacing: ".04em" } }, "实际发送内容"),
+            h("span", { style: readonlyBadge }, "只读")
+          ),
+          h("div", { style: readonlyPrompt }, `项目目录：<项目根>/project-example
 页面：P02 页面标题
 当前文案：content/pages/P02.md
 ${DEFAULT_OPTIMIZE_INSTRUCTION}
@@ -1161,7 +1180,11 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
           h("div", { style: { marginBottom: 10 } },
             renderSegmented([["default", "默认"], ["preserve", "完全保留文案"], ["compress", "允许版式压缩"]], renderPolicy, setRenderPolicy, "版式取舍规则")
           ),
-          h("pre", { style: promptText }, `项目目录：<项目根>/project-example
+          h("div", { style: readonlyLabel },
+            h("span", { style: { ...S.muted, fontSize: 10.5, letterSpacing: ".04em" } }, "实际发送内容"),
+            h("span", { style: readonlyBadge }, "只读")
+          ),
+          h("div", { style: readonlyPrompt }, `项目目录：<项目根>/project-example
 页面：P02 页面标题
 源文案：content/pages/P02.md
 产物路径：${example.file}
@@ -1175,7 +1198,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
             value: renderPrompts[renderPolicy] || DEFAULT_RENDER_PROMPTS[renderPolicy],
             onChange: (event) => updatePrompt(renderPolicy, event.target.value),
           }),
-          h("pre", { style: { ...promptText, marginTop: 8 } }, "不要回写 content/pages 下的源文案。"),
+          h("div", { style: { ...readonlyPrompt, marginTop: 8 } }, "不要回写 content/pages 下的源文案。"),
           h("div", { style: { ...S.muted, marginTop: 8, fontSize: 11, lineHeight: 1.7 } },
             "生成弹窗里填写“本页临时备注”时，它会替换上面的取舍规则；不填写就使用当前选中的规则。",
             h("br"),
@@ -1327,7 +1350,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
         ),
         h("div", { style: promptCard },
           sectionHeader("诊断与重置", null,
-            "当前插件 v0.1.48。参考库状态和内容技能状态会随保存刷新。"),
+            "当前插件 v0.1.49。参考库状态和内容技能状态会随保存刷新。"),
           h("div", { style: { ...S.row, flexWrap: "wrap" } },
             h(Button, { variant: "ghost", onClick: () => void refreshCapabilities() }, "刷新能力状态"),
             h(Button, { variant: "ghost", onClick: resetPrompts }, "恢复默认提示词")
