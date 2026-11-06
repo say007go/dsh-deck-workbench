@@ -112,8 +112,6 @@ window.__ModuleLoader__.load({
       overlay: { position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 },
       modal: { width: "min(720px, 96vw)", maxHeight: "90vh", overflow: "auto", background: SURFACE, color: TEXT, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 20, boxShadow: "0 24px 64px rgba(0,0,0,.32)" },
       modalWide: { width: "min(1040px, 96vw)", maxHeight: "90vh", overflow: "hidden", background: SURFACE, color: TEXT, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 0, boxShadow: "0 20px 60px rgba(0,0,0,.35)", display: "flex", flexDirection: "column" },
-      modalFixed: { width: "min(840px, 96vw)", height: "min(720px, 88vh)", maxHeight: "90vh", boxSizing: "border-box", display: "flex", flexDirection: "column", overflow: "hidden", background: SURFACE, color: TEXT, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 20, boxShadow: "0 24px 64px rgba(0,0,0,.32)" },
-      modalBody: { flex: "1 1 auto", minHeight: 0, overflow: "auto", scrollbarGutter: "stable", paddingBottom: 2 },
       row: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" },
       label: { display: "block", ...TYPE.label, color: MUTED, marginBottom: 4 },
       field: { display: "flex", flexDirection: "column", gap: 4, marginBottom: 12 },
@@ -653,7 +651,7 @@ window.__ModuleLoader__.load({
       const header = h("div", { style: S.top },
         h("div", { style: { flex: "1 1 auto", minWidth: 180 } },
           h("div", { style: S.h1 }, "方案工作台"),
-          h("div", { style: S.muted }, "开发者：圣婴 | 微信：say007go | 版本号：0.1.50")
+          h("div", { style: S.muted }, "开发者：圣婴 | 微信：say007go | 版本号：0.1.51")
         ),
         h(Button, { onClick: () => setNewOpen(true), variant: "primary" }, "新建项目"),
         h(Button, { onClick: () => setSettingsOpen(true) }, "设置"),
@@ -1247,7 +1245,10 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
             value: renderPrompts[renderPolicy] || DEFAULT_RENDER_PROMPTS[renderPolicy],
             onChange: (event) => updatePrompt(renderPolicy, event.target.value),
           }),
-          h("div", { style: { ...readonlyPrompt, marginTop: 10 } }, "不要回写 content/pages 下的源文案。"),
+          h("div", { style: { display: "flex", alignItems: "flex-start", gap: 8, marginTop: 10 } },
+            h("span", { style: { ...promptDocChip, flex: "0 0 auto" } }, "固定规则"),
+            h("div", { style: readonlyPrompt }, "不要回写 content/pages 下的源文案。")
+          ),
           h("div", { style: { ...TYPE.caption, color: FAINT, marginTop: 8 } },
             "生成弹窗里填写“本页临时备注”时，它会替换上面的取舍规则；不填写就使用当前选中的规则。",
             h("br"),
@@ -1277,8 +1278,9 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
       const referenceRow = (library) => h("div", {
         key: library.id,
         style: {
-          border: `1px solid ${library.active ? `${ACCENT}66` : SOFT_BORDER}`,
-          background: library.active ? "var(--dsw-alias-bg-layer-2, rgba(128,128,128,.07))" : "transparent",
+          border: `1px solid ${SOFT_BORDER}`,
+          background: library.active ? "var(--dsw-alias-bg-layer-2, rgba(128,128,128,.055))" : "transparent",
+          boxShadow: library.active ? "0 1px 2px rgba(0,0,0,.05)" : "none",
           borderRadius: 10,
           padding: "10px 12px",
           display: "flex",
@@ -1291,12 +1293,12 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
             h("div", { style: { display: "flex", alignItems: "center", gap: 6, minWidth: 0 } },
               h("span", { style: { ...S.dot, background: library.ok ? "#2f8f5b" : "#d9534f", flex: "0 0 auto" } }),
               h("span", { style: { ...TYPE.item, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, library.name),
-              library.active ? h("span", { style: { ...S.badge, color: ACCENT, borderColor: `${ACCENT}44`, background: `${ACCENT}0d`, fontSize: 10 } }, "当前使用") : null
+              library.active ? h("span", { style: { ...S.badge, ...TYPE.meta, color: ACCENT, borderColor: `${ACCENT}44`, background: `${ACCENT}0d` } }, "当前使用") : null
             ),
             h("div", { style: { ...TYPE.caption, color: MUTED, marginTop: 3 } },
               `${library.ok ? `${library.pages} 页` : "不可用"}${library.builtAt ? ` · ${new Date(library.builtAt).toLocaleString("zh-CN", { hour12: false })}` : ""}`
             ),
-            h("div", { style: { ...TYPE.meta, color: FAINT, marginTop: 2, fontFamily: MONO, wordBreak: "break-all" } }, library.root)
+            h("div", { style: { ...TYPE.meta, color: FAINT, marginTop: 2, wordBreak: "break-all" } }, library.root)
           ),
           multiLibraryReady ? h("div", { style: { ...S.row, flexWrap: "wrap", justifyContent: "flex-end" } },
             !library.active ? h(Button, { variant: "ghost", onClick: () => void activateReference(library.id), disabled: referenceBusy || !library.ok || referenceTargetDirty }, "切换") : null,
@@ -1398,7 +1400,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
         ),
         h("div", { style: promptCard },
           sectionHeader("诊断与重置", null,
-            "当前插件 v0.1.50。参考库状态和内容技能状态会随保存刷新。"),
+            "当前插件 v0.1.51。参考库状态和内容技能状态会随保存刷新。"),
           h("div", { style: { ...S.row, flexWrap: "wrap" } },
             h(Button, { variant: "ghost", onClick: () => void refreshCapabilities() }, "刷新能力状态"),
             h(Button, { variant: "ghost", onClick: resetPrompts }, "恢复默认提示词")
@@ -1418,7 +1420,6 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
           color: TEXT,
           border: `1px solid ${BORDER}`,
           borderRadius: 14,
-          backgroundImage: "radial-gradient(120% 90% at 88% -12%, rgba(173,1,1,.055), transparent 58%)",
           boxShadow: "0 28px 80px rgba(0,0,0,.42)",
         },
         body: { flex: "1 1 auto", minHeight: 0, display: "grid", gridTemplateColumns: "216px minmax(0, 1fr)" },
@@ -1467,22 +1468,24 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
           cursor: "pointer",
         },
         navIcon: {
-          width: 24,
-          height: 24,
+          width: 28,
+          height: 28,
           flex: "0 0 auto",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          borderRadius: 7,
-          border: "1px solid transparent",
-          color: FAINT,
-          fontSize: 12,
+          borderRadius: 999,
+          border: `1px solid ${SOFT_BORDER}`,
+          background: "var(--dsw-alias-bg-base, rgba(128,128,128,.04))",
+          color: MUTED,
+          fontSize: 13,
           lineHeight: 1,
         },
         navIconActive: {
-          color: ACCENT,
-          borderColor: `${ACCENT}33`,
-          background: `${ACCENT}0d`,
+          color: "#ffffff",
+          borderColor: "transparent",
+          background: "linear-gradient(145deg, #C83E38 0%, #9F0606 58%, #850000 100%)",
+          boxShadow: "0 4px 12px rgba(173,1,1,.28), inset 0 1px 0 rgba(255,255,255,.2)",
         },
         navTitle: { display: "block", fontSize: 12.5, lineHeight: 1.5, fontWeight: 550 },
         navHint: { display: "block", marginTop: 2, ...TYPE.caption, color: FAINT },
@@ -1519,7 +1522,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
                   style: activeTab === tab.id ? SS.navItemActive : SS.navItem,
                   onClick: () => setActiveTab(tab.id),
                 },
-                  h("span", { style: { ...SS.navIcon, ...(activeTab === tab.id ? SS.navIconActive : {}) } }, h(SettingsIcon, { name: tab.icon, size: 14 })),
+                  h("span", { style: { ...SS.navIcon, ...(activeTab === tab.id ? SS.navIconActive : {}) } }, h(SettingsIcon, { name: tab.icon, size: 15 })),
                   h("span", null,
                     h("span", { style: SS.navTitle }, tab.label),
                     h("span", { style: SS.navHint }, tab.hint)
