@@ -11,6 +11,20 @@ window.__ModuleLoader__.load({
     const BORDER = "var(--dsw-alias-border-l1, rgba(128,128,128,.22))";
     const SOFT_BORDER = "rgba(128,128,128,.20)";
     const MUTED = "var(--dsw-alias-label-secondary, rgba(128,128,128,.78))";
+    const FAINT = "var(--dsw-alias-label-tertiary, rgba(128,128,128,.62))";
+    // Settings typography scale. Use these tokens instead of ad-hoc fontSize/color pairs.
+    const TYPE = {
+      display: { fontSize: 20, lineHeight: 1.3, fontWeight: 650, letterSpacing: "-.015em" },
+      brand: { fontSize: 18, lineHeight: 1.3, fontWeight: 650, letterSpacing: "-.01em" },
+      section: { fontSize: 13.5, lineHeight: 1.45, fontWeight: 650, letterSpacing: ".005em" },
+      item: { fontSize: 13, lineHeight: 1.5, fontWeight: 650 },
+      body: { fontSize: 12.5, lineHeight: 1.75, fontWeight: 400 },
+      prompt: { fontSize: 12.5, lineHeight: 1.8, fontWeight: 400, whiteSpace: "pre-wrap" },
+      label: { fontSize: 11, lineHeight: 1.5, fontWeight: 500 },
+      caption: { fontSize: 10.5, lineHeight: 1.65, fontWeight: 400 },
+      meta: { fontSize: 9.5, lineHeight: 1.5, fontWeight: 500, letterSpacing: ".08em" },
+      control: { fontSize: 11.5, lineHeight: 1.5, fontWeight: 500 },
+    };
     const SOFT = "var(--dsw-alias-bg-layer-2, rgba(128,128,128,.07))";
     const SURFACE = "var(--dsw-alias-bg-layer-1, #1f1f1f)";
     const TEXT = "var(--dsw-alias-label-primary, inherit)";
@@ -101,7 +115,7 @@ window.__ModuleLoader__.load({
       modalFixed: { width: "min(840px, 96vw)", height: "min(720px, 88vh)", maxHeight: "90vh", boxSizing: "border-box", display: "flex", flexDirection: "column", overflow: "hidden", background: SURFACE, color: TEXT, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 20, boxShadow: "0 24px 64px rgba(0,0,0,.32)" },
       modalBody: { flex: "1 1 auto", minHeight: 0, overflow: "auto", scrollbarGutter: "stable", paddingBottom: 2 },
       row: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" },
-      label: { display: "block", fontSize: 12, color: MUTED, marginBottom: 4 },
+      label: { display: "block", ...TYPE.label, color: MUTED, marginBottom: 4 },
       field: { display: "flex", flexDirection: "column", gap: 4, marginBottom: 12 },
       split: { flex: "1 1 auto", minHeight: 0, display: "grid", gridTemplateColumns: "170px minmax(220px, .9fr) minmax(300px, 1.1fr)", gap: 0, borderTop: `1px solid ${BORDER}` },
       resizer: { width: 6, cursor: "col-resize", background: BORDER, alignSelf: "stretch", touchAction: "none" },
@@ -267,6 +281,38 @@ window.__ModuleLoader__.load({
         h("rect", { x: 6, y: 7, width: 5.5, height: 7, rx: 0.75, fill: ACCENT }),
         h("path", { d: "M14 7.75h3.5M14 10.25h3.5M14 12.75h2.5", stroke: "currentColor", strokeWidth: 1.5, strokeLinecap: "round" })
       );
+    }
+
+    // Lucide icons, ISC license: sliders-horizontal, library, settings.
+    function SettingsIcon({ name, size = 14 }) {
+      const common = { stroke: "currentColor", strokeWidth: 1.7, strokeLinecap: "round", strokeLinejoin: "round", fill: "none" };
+      let children;
+      if (name === "sliders") {
+        children = [
+          h("line", { key: "a", x1: 21, x2: 14, y1: 4, y2: 4, ...common }),
+          h("line", { key: "b", x1: 10, x2: 3, y1: 4, y2: 4, ...common }),
+          h("line", { key: "c", x1: 21, x2: 12, y1: 12, y2: 12, ...common }),
+          h("line", { key: "d", x1: 8, x2: 3, y1: 12, y2: 12, ...common }),
+          h("line", { key: "e", x1: 21, x2: 16, y1: 20, y2: 20, ...common }),
+          h("line", { key: "f", x1: 12, x2: 3, y1: 20, y2: 20, ...common }),
+          h("line", { key: "g", x1: 14, x2: 14, y1: 2, y2: 6, ...common }),
+          h("line", { key: "h", x1: 8, x2: 8, y1: 10, y2: 14, ...common }),
+          h("line", { key: "i", x1: 16, x2: 16, y1: 18, y2: 22, ...common }),
+        ];
+      } else if (name === "library") {
+        children = [
+          h("path", { key: "a", d: "m16 6 4 14", ...common }),
+          h("path", { key: "b", d: "M12 6v14", ...common }),
+          h("path", { key: "c", d: "M8 8v12", ...common }),
+          h("path", { key: "d", d: "M4 4v16", ...common }),
+        ];
+      } else {
+        children = [
+          h("path", { key: "a", d: "M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z", ...common }),
+          h("circle", { key: "b", cx: 12, cy: 12, r: 3, ...common }),
+        ];
+      }
+      return h("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", "aria-hidden": "true" }, ...children);
     }
 
     class ErrorBoundary extends React.Component {
@@ -607,7 +653,7 @@ window.__ModuleLoader__.load({
       const header = h("div", { style: S.top },
         h("div", { style: { flex: "1 1 auto", minWidth: 180 } },
           h("div", { style: S.h1 }, "方案工作台"),
-          h("div", { style: S.muted }, "开发者：圣婴 | 微信：say007go | 版本号：0.1.49")
+          h("div", { style: S.muted }, "开发者：圣婴 | 微信：say007go | 版本号：0.1.50")
         ),
         h(Button, { onClick: () => setNewOpen(true), variant: "primary" }, "新建项目"),
         h(Button, { onClick: () => setSettingsOpen(true) }, "设置"),
@@ -946,38 +992,31 @@ window.__ModuleLoader__.load({
         background: "transparent",
       };
       const moduleTitle = (title, style = {}) => h("div", {
-        style: { ...S.h2, fontSize: 13.5, fontWeight: 650, letterSpacing: ".005em", lineHeight: 1.45, ...style },
+        style: { ...TYPE.section, ...style },
       }, title);
       const sectionHeader = (title, right = null, hint = "") => h("div", { style: { marginBottom: 12 } },
         h("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 } },
           moduleTitle(title),
           right
         ),
-        hint ? h("div", { style: { ...S.muted, marginTop: 4, fontSize: 11, lineHeight: 1.7 } }, hint) : null
+        hint ? h("div", { style: { ...TYPE.caption, color: FAINT, marginTop: 4 } }, hint) : null
       );
       const readonlyPrompt = {
         ...S.pre,
+        ...TYPE.prompt,
         margin: 0,
-        padding: "0 0 0 10px",
-        borderLeft: `2px solid ${SOFT_BORDER}`,
-        background: "transparent",
+        padding: 0,
         color: MUTED,
-        fontFamily: "inherit",
-        fontSize: 12.5,
-        lineHeight: 1.8,
-        whiteSpace: "pre-wrap",
       };
-      const readonlyLabel = { display: "flex", alignItems: "center", gap: 6, marginBottom: 6 };
-      const readonlyBadge = { ...S.badge, fontSize: 9.5, padding: "1px 6px" };
-      const promptInput = { ...S.input, fontFamily: "inherit", fontSize: 12.5, lineHeight: 1.8, resize: "vertical" };
+      const promptInput = { ...S.input, ...TYPE.body, lineHeight: 1.8, resize: "vertical" };
       const promptDoc = {
         border: `1px solid ${SOFT_BORDER}`,
         borderRadius: 10,
         padding: 0,
         overflow: "hidden",
         background: "var(--dsw-alias-bg-base, rgba(128,128,128,.035))",
-        fontSize: 12.5,
-        lineHeight: 1.8,
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,.035), 0 1px 2px rgba(0,0,0,.05)",
+        ...TYPE.prompt,
       };
       const promptDocHead = {
         display: "flex",
@@ -989,15 +1028,17 @@ window.__ModuleLoader__.load({
         background: "var(--dsw-alias-bg-layer-2, rgba(128,128,128,.035))",
       };
       const promptDocBody = { padding: "13px 15px 15px" };
+      const readonlyDoc = { ...promptDoc };
+      const readonlyDocHead = { ...promptDocHead };
+      const readonlyDocBody = { padding: "12px 15px 13px" };
       const promptDocChip = {
         display: "inline-flex",
         alignItems: "center",
         border: `1px solid ${SOFT_BORDER}`,
         borderRadius: 999,
         padding: "2px 7px",
-        color: MUTED,
-        fontSize: 9.5,
-        lineHeight: 1.5,
+        color: FAINT,
+        ...TYPE.meta,
       };
       const promptDocChipEditable = {
         ...promptDocChip,
@@ -1021,8 +1062,8 @@ window.__ModuleLoader__.load({
         background: "transparent",
         color: MUTED,
         fontFamily: "inherit",
-        fontSize: 11.5,
         cursor: "pointer",
+        ...TYPE.control,
       };
       const segmentActive = {
         ...segment,
@@ -1044,7 +1085,7 @@ window.__ModuleLoader__.load({
         onClick: () => onChange(key),
       }, label)));
 
-      const promptFixedLine = { ...S.muted, fontSize: 12.5, lineHeight: 1.8, whiteSpace: "pre-wrap" };
+      const promptFixedLine = { ...TYPE.prompt, color: MUTED };
       const inlineSkillInput = {
         ...S.input,
         display: "inline-block",
@@ -1058,7 +1099,7 @@ window.__ModuleLoader__.load({
         borderRadius: 5,
         background: "var(--dsw-alias-bg-base, rgba(128,128,128,.06))",
         fontFamily: "inherit",
-        fontSize: 12.5,
+        ...TYPE.body,
         lineHeight: 1.5,
         verticalAlign: "baseline",
       };
@@ -1069,9 +1110,9 @@ window.__ModuleLoader__.load({
       };
       const example = examples[renderTarget];
       const settingsTabs = [
-        { id: "prompts", label: "提示词设置", hint: "内容、版式与生成规则", icon: "◧" },
-        { id: "reference", label: "参考库", hint: "页面参考与检索库", icon: "▤" },
-        { id: "advanced", label: "其他设置", hint: "路径、能力与诊断", icon: "⚙" },
+        { id: "prompts", label: "提示词设置", hint: "内容、版式与生成规则", icon: "sliders" },
+        { id: "reference", label: "参考库", hint: "页面参考与检索库", icon: "library" },
+        { id: "advanced", label: "其他设置", hint: "路径、能力与诊断", icon: "settings" },
       ];
       const activeMeta = settingsTabs.find((item) => item.id === activeTab) || settingsTabs[0];
       const contentSkillName = String(skills.content || "").trim();
@@ -1091,7 +1132,7 @@ window.__ModuleLoader__.load({
       const contentTab = [
         h("div", { style: promptCard },
           moduleTitle("内容生成", { marginBottom: 6 }),
-          h("div", { style: { ...S.muted, marginBottom: 10, fontSize: 12, lineHeight: 1.7 } },
+          h("div", { style: { ...TYPE.caption, color: FAINT, marginBottom: 10 } },
             "新建项目或空白页首次打开时发送。下面这块就是实际发送内容；项目目录在运行时自动填入。"
           ),
           h("div", { style: { marginBottom: 10 } },
@@ -1099,11 +1140,11 @@ window.__ModuleLoader__.load({
           ),
           contentMode === "skill" ? h("div", { style: { ...S.row, flexWrap: "wrap", gap: 8, marginBottom: 10 } },
             h(Button, { variant: "ghost", onClick: () => void checkContentSkill(), disabled: contentSkillStatus?.checking }, contentSkillStatus?.checking ? "检测中…" : "检测技能"),
-            h("span", { style: { ...S.muted, fontSize: 11, lineHeight: 1.7, color: contentSkillStatus?.available === false ? "#d9534f" : MUTED } }, contentSkillText)
+            h("span", { style: { ...TYPE.caption, color: contentSkillStatus?.available === false ? "#d9534f" : FAINT } }, contentSkillText)
           ) : null,
           h("div", { style: promptDoc },
             h("div", { style: promptDocHead },
-              h("div", { style: { fontSize: 11, color: MUTED, letterSpacing: ".02em" } }, "实际发送内容"),
+              h("div", { style: { ...TYPE.meta, color: FAINT, letterSpacing: ".02em" } }, "实际发送内容"),
               h("div", { style: { display: "flex", gap: 5 } },
                 h("span", { style: promptDocChip }, "固定规则"),
                 h("span", { style: promptDocChipEditable }, "可编辑")
@@ -1113,7 +1154,7 @@ window.__ModuleLoader__.load({
             h("div", { style: promptFixedLine }, "项目目录：<项目根>"),
             h("div", { style: promptFixedLine }, "需求文件：content/brief.md，需求附件在 content/input/。"),
             contentMode === "skill" ? h("div", { style: { marginTop: 8 } },
-              h("div", { style: { whiteSpace: "pre-wrap", color: MUTED, fontSize: 12.5, lineHeight: 1.8 } },
+              h("div", { style: { ...TYPE.prompt, color: MUTED } },
                 contentSkillPrefix,
                 h("input", {
                   style: inlineSkillInput,
@@ -1145,7 +1186,7 @@ window.__ModuleLoader__.load({
               h("div", { style: { ...S.row, justifyContent: "space-between", marginBottom: 6 } },
                 h("div", { style: { display: "flex", alignItems: "baseline", gap: 6 } },
                   h("div", { style: S.label }, "内容要求："),
-                  h("span", { style: { ...S.muted, fontSize: 10.5 } }, "两类共用")
+                  h("span", { style: { ...TYPE.meta, color: FAINT } }, "两类共用")
                 ),
                 h(Button, { variant: "ghost", onClick: () => setContentPrompt(DEFAULT_CONTENT_PROMPT) }, "恢复默认")
               ),
@@ -1161,16 +1202,20 @@ window.__ModuleLoader__.load({
         ),
         h("div", { style: promptCard },
           moduleTitle("优化此页", { marginBottom: 8 }),
-          h("div", { style: readonlyLabel },
-            h("span", { style: { ...S.muted, fontSize: 10.5, letterSpacing: ".04em" } }, "实际发送内容"),
-            h("span", { style: readonlyBadge }, "只读")
-          ),
-          h("div", { style: readonlyPrompt }, `项目目录：<项目根>/project-example
+          h("div", { style: readonlyDoc },
+            h("div", { style: readonlyDocHead },
+              h("div", { style: { ...TYPE.meta, color: FAINT, letterSpacing: ".02em" } }, "实际发送内容"),
+              h("span", { style: promptDocChip }, "只读")
+            ),
+            h("div", { style: readonlyDocBody },
+              h("div", { style: readonlyPrompt }, `项目目录：<项目根>/project-example
 页面：P02 页面标题
 当前文案：content/pages/P02.md
 ${DEFAULT_OPTIMIZE_INSTRUCTION}
-反馈：`),
-          h("div", { style: { ...S.muted, marginTop: 4, fontSize: 11 } }, "反馈每次在“优化此页”弹窗里填写，不设预设提示词。")
+反馈：`)
+            )
+          ),
+          h("div", { style: { ...TYPE.caption, color: FAINT, marginTop: 8 } }, "反馈每次在“优化此页”弹窗里填写，不设预设提示词。")
         ),
         h("div", { style: promptCard },
           moduleTitle("生成页面", { marginBottom: 8 }),
@@ -1180,15 +1225,19 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
           h("div", { style: { marginBottom: 10 } },
             renderSegmented([["default", "默认"], ["preserve", "完全保留文案"], ["compress", "允许版式压缩"]], renderPolicy, setRenderPolicy, "版式取舍规则")
           ),
-          h("div", { style: readonlyLabel },
-            h("span", { style: { ...S.muted, fontSize: 10.5, letterSpacing: ".04em" } }, "实际发送内容"),
-            h("span", { style: readonlyBadge }, "只读")
-          ),
-          h("div", { style: readonlyPrompt }, `项目目录：<项目根>/project-example
+          h("div", { style: readonlyDoc },
+            h("div", { style: readonlyDocHead },
+              h("div", { style: { ...TYPE.meta, color: FAINT, letterSpacing: ".02em" } }, "实际发送内容"),
+              h("span", { style: promptDocChip }, "只读")
+            ),
+            h("div", { style: readonlyDocBody },
+              h("div", { style: readonlyPrompt }, `项目目录：<项目根>/project-example
 页面：P02 页面标题
 源文案：content/pages/P02.md
 产物路径：${example.file}
-请使用 ${example.skill} 为这一页制作页面。${example.note}`),
+请使用 ${example.skill} 为这一页制作页面。${example.note}`)
+            )
+          ),
           h("div", { style: { ...S.row, justifyContent: "space-between", marginTop: 10, marginBottom: 4 } },
             h("div", { style: S.label }, "版式取舍规则（可编辑）"),
             h(Button, { variant: "ghost", onClick: () => updatePrompt(renderPolicy, DEFAULT_RENDER_PROMPTS[renderPolicy]) }, "恢复默认")
@@ -1198,8 +1247,8 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
             value: renderPrompts[renderPolicy] || DEFAULT_RENDER_PROMPTS[renderPolicy],
             onChange: (event) => updatePrompt(renderPolicy, event.target.value),
           }),
-          h("div", { style: { ...readonlyPrompt, marginTop: 8 } }, "不要回写 content/pages 下的源文案。"),
-          h("div", { style: { ...S.muted, marginTop: 8, fontSize: 11, lineHeight: 1.7 } },
+          h("div", { style: { ...readonlyPrompt, marginTop: 10 } }, "不要回写 content/pages 下的源文案。"),
+          h("div", { style: { ...TYPE.caption, color: FAINT, marginTop: 8 } },
             "生成弹窗里填写“本页临时备注”时，它会替换上面的取舍规则；不填写就使用当前选中的规则。",
             h("br"),
             "最后一行“不要回写源文案”是固定要求，不能编辑。"
@@ -1217,8 +1266,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
           borderRadius: 8,
           border: `1px solid ${referenceCheck.ok ? "#2f8f5b" : "#d9534f"}55`,
           color: referenceCheck.ok ? "#2f8f5b" : "#d9534f",
-          fontSize: 11,
-          lineHeight: 1.7,
+          ...TYPE.caption,
         },
       },
         h("div", null, referenceCheck.ok ? "校验通过：参考库结构、索引和页面图一致。" : `校验未通过：${referenceErrors.length} 项问题。`),
@@ -1242,13 +1290,13 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
           h("div", { style: { minWidth: 0 } },
             h("div", { style: { display: "flex", alignItems: "center", gap: 6, minWidth: 0 } },
               h("span", { style: { ...S.dot, background: library.ok ? "#2f8f5b" : "#d9534f", flex: "0 0 auto" } }),
-              h("span", { style: { fontWeight: 650, fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, library.name),
+              h("span", { style: { ...TYPE.item, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, library.name),
               library.active ? h("span", { style: { ...S.badge, color: ACCENT, borderColor: `${ACCENT}44`, background: `${ACCENT}0d`, fontSize: 10 } }, "当前使用") : null
             ),
-            h("div", { style: { ...S.muted, marginTop: 3, fontSize: 11, lineHeight: 1.6 } },
+            h("div", { style: { ...TYPE.caption, color: MUTED, marginTop: 3 } },
               `${library.ok ? `${library.pages} 页` : "不可用"}${library.builtAt ? ` · ${new Date(library.builtAt).toLocaleString("zh-CN", { hour12: false })}` : ""}`
             ),
-            h("div", { style: { ...S.muted, marginTop: 2, fontFamily: MONO, fontSize: 10.5, wordBreak: "break-all" } }, library.root)
+            h("div", { style: { ...TYPE.meta, color: FAINT, marginTop: 2, fontFamily: MONO, wordBreak: "break-all" } }, library.root)
           ),
           multiLibraryReady ? h("div", { style: { ...S.row, flexWrap: "wrap", justifyContent: "flex-end" } },
             !library.active ? h(Button, { variant: "ghost", onClick: () => void activateReference(library.id), disabled: referenceBusy || !library.ok || referenceTargetDirty }, "切换") : null,
@@ -1261,12 +1309,12 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
         referenceCheckBox(library)
       );
       const referenceTab = [
-        h("div", { style: { ...S.muted, marginBottom: 14, fontSize: 12, lineHeight: 1.7 } },
+        h("div", { style: { ...TYPE.caption, color: FAINT, marginBottom: 14 } },
           "参考库是共享的页面参考集，同一时间只有一个当前库。新建库不会覆盖已有库；切换只影响之后运行的排版技能。"
         ),
         h("div", { style: promptCard },
-          sectionHeader("当前参考库", h("div", { style: { ...S.muted, fontSize: 11 } }, librarySummary)),
-          referenceTargetDirty ? h("div", { style: { ...S.muted, marginBottom: 10, color: "#d9534f", fontSize: 11, lineHeight: 1.7 } },
+          sectionHeader("当前参考库", h("div", { style: { ...TYPE.caption, color: FAINT } }, librarySummary)),
+          referenceTargetDirty ? h("div", { style: { ...TYPE.caption, marginBottom: 10, color: "#d9534f" } },
             "项目根目录有未保存修改；先在“其他设置”保存，再上传、切换或重建。"
           ) : null,
           h("div", { style: { display: "flex", flexDirection: "column", gap: 8 } },
@@ -1278,7 +1326,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
         multiLibraryReady ? h("div", {
           style: { ...promptCard, border: `1px dashed ${SOFT_BORDER}`, borderRadius: 10, padding: 14, marginBottom: 0 },
         },
-          sectionHeader("新建参考库", h("div", { style: { ...S.muted, fontSize: 11 } }, referenceLibraries.length ? "" : "第一个库构建成功后会自动设为当前库")),
+          sectionHeader("新建参考库", h("div", { style: { ...TYPE.caption, color: FAINT } }, referenceLibraries.length ? "" : "第一个库构建成功后会自动设为当前库")),
           h("div", { style: { ...S.row, alignItems: "stretch", marginBottom: 8 } },
             h("input", {
               style: { ...S.input, flex: "1 1 240px" },
@@ -1295,23 +1343,23 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
             }),
             h(Button, { variant: "primary", onClick: () => fileRef.current?.click(), disabled: referenceBusy || referenceTargetDirty }, referenceBusy ? "构建中…" : "选择 PPTX 并构建")
           ),
-          h("div", { style: { ...S.muted, fontSize: 11, lineHeight: 1.7 } },
+          h("div", { style: { ...TYPE.caption, color: FAINT } },
             "支持 .pptx。构建需要 LibreOffice 和 Python，通常需要几分钟；构建期间不要关闭设置。"
           ),
         ) : null,
         referenceProgress ? h("div", { style: promptCard },
           h("div", { style: { ...S.row, justifyContent: "space-between", marginBottom: 8 } },
-            h("div", { style: { ...S.h2, fontSize: 14, fontWeight: 650 } }, "构建进度"),
-            h("div", { style: { ...S.muted, fontSize: 11 } }, `${referenceProgress.stage || "构建"} · ${referenceProgress.percent || 0}%`)
+            h("div", { style: TYPE.section }, "构建进度"),
+            h("div", { style: { ...TYPE.caption, color: FAINT } }, `${referenceProgress.stage || "构建"} · ${referenceProgress.percent || 0}%`)
           ),
           h("div", { style: { height: 6, borderRadius: 3, background: BORDER, overflow: "hidden", marginBottom: 8 } },
             h("div", { style: { height: "100%", width: `${Math.max(0, Math.min(100, Number(referenceProgress.percent) || 0))}%`, background: ACCENT } })
           ),
-          h("div", { style: { ...S.muted, fontSize: 11 } }, referenceProgress.message || ""),
-          referenceProgress.status === "error" ? h("div", { style: { color: "#d9534f", fontSize: 11, marginTop: 6 } }, referenceProgress.error || "构建失败") : null
+          h("div", { style: { ...TYPE.caption, color: FAINT } }, referenceProgress.message || ""),
+          referenceProgress.status === "error" ? h("div", { style: { ...TYPE.caption, color: "#d9534f", marginTop: 6 } }, referenceProgress.error || "构建失败") : null
         ) : null,
-        referenceError ? h("div", { style: { color: "#d9534f", fontSize: 12, marginBottom: 12 } }, referenceError) : null,
-        !multiLibraryReady ? h("div", { style: { ...S.muted, color: "#d9534f", fontSize: 11, lineHeight: 1.7 } },
+        referenceError ? h("div", { style: { ...TYPE.body, color: "#d9534f", marginBottom: 12 } }, referenceError) : null,
+        !multiLibraryReady ? h("div", { style: { ...TYPE.caption, color: "#d9534f" } },
           "当前 DSH 宿主还没有加载多参考库接口，请重启 DSH 后再管理库列表。"
         ) : null,
       ];
@@ -1338,7 +1386,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
               h(Button, { variant: "ghost", onClick: () => void copyValue(projectsRoot) }, "复制")
             )
           ),
-          h("div", { style: { ...S.muted, marginTop: 8, fontSize: 11, lineHeight: 1.7 } },
+          h("div", { style: { ...TYPE.caption, color: FAINT, marginTop: 8 } },
             "保存后重启 DSH 生效；只影响新建项目和新建参考库，已有项目/参考库不会迁移。"
           )
         ),
@@ -1346,11 +1394,11 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
           sectionHeader("图片生成能力",
             h(Button, { variant: "ghost", onClick: () => void checkImagegen(), disabled: imagegenChecking }, imagegenChecking ? "检测中…" : "重新检测"),
             "检测只做提示，不阻止图片按钮。生成时实际调用；工具缺失会正常报错。"),
-          h("div", { style: { ...S.muted, fontSize: 11, lineHeight: 1.7, color: imagegenLive?.available === false ? "#d9534f" : MUTED } }, imagegenText)
+          h("div", { style: { ...TYPE.caption, color: imagegenLive?.available === false ? "#d9534f" : FAINT } }, imagegenText)
         ),
         h("div", { style: promptCard },
           sectionHeader("诊断与重置", null,
-            "当前插件 v0.1.49。参考库状态和内容技能状态会随保存刷新。"),
+            "当前插件 v0.1.50。参考库状态和内容技能状态会随保存刷新。"),
           h("div", { style: { ...S.row, flexWrap: "wrap" } },
             h(Button, { variant: "ghost", onClick: () => void refreshCapabilities() }, "刷新能力状态"),
             h(Button, { variant: "ghost", onClick: resetPrompts }, "恢复默认提示词")
@@ -1370,6 +1418,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
           color: TEXT,
           border: `1px solid ${BORDER}`,
           borderRadius: 14,
+          backgroundImage: "radial-gradient(120% 90% at 88% -12%, rgba(173,1,1,.055), transparent 58%)",
           boxShadow: "0 28px 80px rgba(0,0,0,.42)",
         },
         body: { flex: "1 1 auto", minHeight: 0, display: "grid", gridTemplateColumns: "216px minmax(0, 1fr)" },
@@ -1382,9 +1431,9 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
           flexDirection: "column",
         },
         brand: { padding: "2px 10px 22px" },
-        brandEyebrow: { fontSize: 9.5, letterSpacing: ".16em", color: MUTED, textTransform: "uppercase" },
-        brandTitle: { margin: "7px 0 0", fontSize: 18, fontWeight: 650, letterSpacing: "-.01em" },
-        railLabel: { padding: "0 10px 8px", color: MUTED, fontSize: 9.5, letterSpacing: ".12em" },
+        brandEyebrow: { ...TYPE.meta, letterSpacing: ".16em", color: FAINT, textTransform: "uppercase" },
+        brandTitle: { margin: "7px 0 0", ...TYPE.brand },
+        railLabel: { padding: "0 10px 8px", ...TYPE.meta, color: FAINT, letterSpacing: ".12em" },
         nav: { display: "flex", flexDirection: "column", gap: 3 },
         navItem: {
           position: "relative",
@@ -1411,25 +1460,43 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
           border: `1px solid ${SOFT_BORDER}`,
           borderRadius: 8,
           background: "var(--dsw-alias-bg-layer-1, rgba(128,128,128,.08))",
+          boxShadow: "0 1px 2px rgba(0,0,0,.08)",
           color: TEXT,
           textAlign: "left",
           fontFamily: "inherit",
           cursor: "pointer",
         },
-        navIcon: { width: 15, flex: "0 0 auto", textAlign: "center", fontSize: 13, lineHeight: "18px", opacity: .8 },
+        navIcon: {
+          width: 24,
+          height: 24,
+          flex: "0 0 auto",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: 7,
+          border: "1px solid transparent",
+          color: FAINT,
+          fontSize: 12,
+          lineHeight: 1,
+        },
+        navIconActive: {
+          color: ACCENT,
+          borderColor: `${ACCENT}33`,
+          background: `${ACCENT}0d`,
+        },
         navTitle: { display: "block", fontSize: 12.5, lineHeight: 1.5, fontWeight: 550 },
-        navHint: { display: "block", marginTop: 2, fontSize: 10, lineHeight: 1.5, color: MUTED, fontWeight: 400 },
-        railFoot: { marginTop: "auto", padding: "12px 10px 0", borderTop: `1px solid ${BORDER}`, color: MUTED, fontSize: 10, lineHeight: 1.7 },
+        navHint: { display: "block", marginTop: 2, ...TYPE.caption, color: FAINT },
+        railFoot: { marginTop: "auto", padding: "12px 10px 0", borderTop: `1px solid ${BORDER}`, ...TYPE.caption, color: FAINT },
         main: { minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column" },
         top: { flex: "0 0 auto", padding: "22px 28px 0", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, background: SURFACE, position: "relative", zIndex: 2 },
-        crumb: { color: MUTED, fontSize: 9.5, letterSpacing: ".12em", textTransform: "uppercase" },
-        pageTitle: { margin: "7px 0 0", fontSize: 20, fontWeight: 650, letterSpacing: "-.015em" },
-        pageSub: { margin: "6px 0 0", color: MUTED, fontSize: 11.5, lineHeight: 1.7 },
+        crumb: { ...TYPE.meta, color: FAINT, letterSpacing: ".12em", textTransform: "uppercase" },
+        pageTitle: { margin: "7px 0 0", ...TYPE.display },
+        pageSub: { margin: "6px 0 0", ...TYPE.caption, color: FAINT, fontSize: 11 },
         close: { appearance: "none", border: 0, background: "transparent", color: MUTED, fontSize: 20, lineHeight: 1, padding: 3, cursor: "pointer", fontFamily: "inherit" },
         content: { flex: "1 1 auto", minHeight: 0, overflow: "auto", scrollbarGutter: "stable", padding: "20px 28px 20px" },
-        error: { margin: "0 28px 10px", padding: "8px 10px", border: "1px solid rgba(217,83,79,.35)", borderRadius: 7, background: "rgba(217,83,79,.08)", color: "#d9534f", fontSize: 11.5, lineHeight: 1.7 },
+        error: { margin: "0 28px 10px", padding: "8px 10px", border: "1px solid rgba(217,83,79,.35)", borderRadius: 7, background: "rgba(217,83,79,.08)", color: "#d9534f", ...TYPE.caption },
         footer: { flex: "0 0 56px", borderTop: `1px solid ${BORDER}`, background: "var(--dsw-alias-bg-layer-2, rgba(128,128,128,.035))", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "0 18px 0 20px" },
-        footerLeft: { display: "flex", alignItems: "center", gap: 6, minWidth: 0, color: MUTED, fontSize: 10.5, lineHeight: 1.5 },
+        footerLeft: { display: "flex", alignItems: "center", gap: 6, minWidth: 0, ...TYPE.caption, color: FAINT },
         footerDot: { width: 5, height: 5, borderRadius: 999, flex: "0 0 auto", background: "currentColor" },
         footerActions: { display: "flex", alignItems: "center", gap: 8, flex: "0 0 auto" },
       };
@@ -1452,8 +1519,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
                   style: activeTab === tab.id ? SS.navItemActive : SS.navItem,
                   onClick: () => setActiveTab(tab.id),
                 },
-                  activeTab === tab.id ? h("span", { style: { position: "absolute", left: 0, top: 9, bottom: 9, width: 2, borderRadius: 2, background: ACCENT } }) : null,
-                  h("span", { style: SS.navIcon }, tab.icon),
+                  h("span", { style: { ...SS.navIcon, ...(activeTab === tab.id ? SS.navIconActive : {}) } }, h(SettingsIcon, { name: tab.icon, size: 14 })),
                   h("span", null,
                     h("span", { style: SS.navTitle }, tab.label),
                     h("span", { style: SS.navHint }, tab.hint)
