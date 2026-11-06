@@ -607,7 +607,7 @@ window.__ModuleLoader__.load({
       const header = h("div", { style: S.top },
         h("div", { style: { flex: "1 1 auto", minWidth: 180 } },
           h("div", { style: S.h1 }, "方案工作台"),
-          h("div", { style: S.muted }, "开发者：圣婴 | 微信：say007go | 版本号：0.1.47")
+          h("div", { style: S.muted }, "开发者：圣婴 | 微信：say007go | 版本号：0.1.48")
         ),
         h(Button, { onClick: () => setNewOpen(true), variant: "primary" }, "新建项目"),
         h(Button, { onClick: () => setSettingsOpen(true) }, "设置"),
@@ -955,15 +955,15 @@ window.__ModuleLoader__.load({
         ),
         hint ? h("div", { style: { ...S.muted, marginTop: 4, fontSize: 11, lineHeight: 1.7 } }, hint) : null
       );
-      const promptText = { ...S.pre, margin: 0, padding: 10, border: `1px solid ${SOFT_BORDER}`, borderRadius: 8, fontFamily: MONO, fontSize: 12, lineHeight: 1.7, whiteSpace: "pre-wrap" };
-      const promptInput = { ...S.input, fontFamily: "inherit", fontSize: 13, lineHeight: 1.65, resize: "vertical" };
+      const promptText = { ...S.pre, margin: 0, padding: 10, border: `1px solid ${SOFT_BORDER}`, borderRadius: 8, fontFamily: "inherit", fontSize: 12.5, lineHeight: 1.8, whiteSpace: "pre-wrap" };
+      const promptInput = { ...S.input, fontFamily: "inherit", fontSize: 12.5, lineHeight: 1.8, resize: "vertical" };
       const promptDoc = {
         border: `1px solid ${SOFT_BORDER}`,
         borderRadius: 10,
         padding: 0,
         overflow: "hidden",
         background: "var(--dsw-alias-bg-base, rgba(128,128,128,.035))",
-        fontSize: 13,
+        fontSize: 12.5,
         lineHeight: 1.8,
       };
       const promptDocHead = {
@@ -1019,7 +1019,19 @@ window.__ModuleLoader__.load({
         fontWeight: 600,
         boxShadow: "0 1px 2px rgba(0,0,0,.22)",
       };
-      const promptFixedLine = { ...S.muted, fontSize: 12, lineHeight: 1.75, whiteSpace: "pre-wrap" };
+      const renderSegmented = (options, value, onChange, ariaLabel) => h("div", {
+        style: segmented,
+        role: "group",
+        "aria-label": ariaLabel,
+      }, options.map(([key, label]) => h("button", {
+        key,
+        type: "button",
+        style: value === key ? segmentActive : segment,
+        "aria-pressed": value === key,
+        onClick: () => onChange(key),
+      }, label)));
+
+      const promptFixedLine = { ...S.muted, fontSize: 12.5, lineHeight: 1.8, whiteSpace: "pre-wrap" };
       const inlineSkillInput = {
         ...S.input,
         display: "inline-block",
@@ -1032,7 +1044,7 @@ window.__ModuleLoader__.load({
         borderBottom: `1px dashed ${SOFT_BORDER}`,
         borderRadius: 0,
         background: "transparent",
-        fontFamily: MONO,
+        fontFamily: "inherit",
         fontSize: 12.5,
         verticalAlign: "baseline",
       };
@@ -1068,13 +1080,8 @@ window.__ModuleLoader__.load({
           h("div", { style: { ...S.muted, marginBottom: 10, fontSize: 12, lineHeight: 1.7 } },
             "新建项目或空白页首次打开时发送。下面这块就是实际发送内容；项目目录在运行时自动填入。"
           ),
-          h("div", { style: { ...segmented, marginBottom: 12 } },
-            [["skill", "调用内容技能"], ["builtin", "不调用内容技能"]].map(([key, label]) => h("button", {
-              key,
-              type: "button",
-              style: contentMode === key ? segmentActive : segment,
-              onClick: () => setContentMode(key),
-            }, label))
+          h("div", { style: { marginBottom: 12 } },
+            renderSegmented([["skill", "调用内容技能"], ["builtin", "不调用内容技能"]], contentMode, setContentMode, "内容生成方式")
           ),
           h("div", { style: promptDoc },
             h("div", { style: promptDocHead },
@@ -1148,19 +1155,11 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
         ),
         h("div", { style: promptCard },
           moduleTitle("生成页面", { marginBottom: 8 }),
-          h("div", { style: { ...S.row, flexWrap: "wrap", marginBottom: 8 } },
-            TARGET_ORDER.map((key) => h(Button, {
-              key,
-              variant: renderTarget === key ? "primary" : "ghost",
-              onClick: () => setRenderTarget(key),
-            }, TARGET_LABELS[key]))
+          h("div", { style: { marginBottom: 8 } },
+            renderSegmented(TARGET_ORDER.map((key) => [key, TARGET_LABELS[key]]), renderTarget, setRenderTarget, "目标格式")
           ),
-          h("div", { style: { ...S.row, flexWrap: "wrap", marginBottom: 10 } },
-            [["default", "默认"], ["preserve", "完全保留文案"], ["compress", "允许版式压缩"]].map(([key, label]) => h(Button, {
-              key,
-              variant: renderPolicy === key ? "primary" : "ghost",
-              onClick: () => setRenderPolicy(key),
-            }, label))
+          h("div", { style: { marginBottom: 10 } },
+            renderSegmented([["default", "默认"], ["preserve", "完全保留文案"], ["compress", "允许版式压缩"]], renderPolicy, setRenderPolicy, "版式取舍规则")
           ),
           h("pre", { style: promptText }, `项目目录：<项目根>/project-example
 页面：P02 页面标题
@@ -1328,7 +1327,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
         ),
         h("div", { style: promptCard },
           sectionHeader("诊断与重置", null,
-            "当前插件 v0.1.47。参考库状态和内容技能状态会随保存刷新。"),
+            "当前插件 v0.1.48。参考库状态和内容技能状态会随保存刷新。"),
           h("div", { style: { ...S.row, flexWrap: "wrap" } },
             h(Button, { variant: "ghost", onClick: () => void refreshCapabilities() }, "刷新能力状态"),
             h(Button, { variant: "ghost", onClick: resetPrompts }, "恢复默认提示词")
@@ -1399,7 +1398,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
         navHint: { display: "block", marginTop: 2, fontSize: 10, lineHeight: 1.5, color: MUTED, fontWeight: 400 },
         railFoot: { marginTop: "auto", padding: "12px 10px 0", borderTop: `1px solid ${BORDER}`, color: MUTED, fontSize: 10, lineHeight: 1.7 },
         main: { minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column" },
-        top: { flex: "0 0 auto", padding: "22px 28px 0", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 },
+        top: { flex: "0 0 auto", padding: "22px 28px 0", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, background: SURFACE, position: "relative", zIndex: 2 },
         crumb: { color: MUTED, fontSize: 9.5, letterSpacing: ".12em", textTransform: "uppercase" },
         pageTitle: { margin: "7px 0 0", fontSize: 20, fontWeight: 650, letterSpacing: "-.015em" },
         pageSub: { margin: "6px 0 0", color: MUTED, fontSize: 11.5, lineHeight: 1.7 },
