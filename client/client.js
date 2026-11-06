@@ -607,7 +607,7 @@ window.__ModuleLoader__.load({
       const header = h("div", { style: S.top },
         h("div", { style: { flex: "1 1 auto", minWidth: 180 } },
           h("div", { style: S.h1 }, "方案工作台"),
-          h("div", { style: S.muted }, "开发者：圣婴 | 微信：say007go | 版本号：0.1.46")
+          h("div", { style: S.muted }, "开发者：圣婴 | 微信：say007go | 版本号：0.1.47")
         ),
         h(Button, { onClick: () => setNewOpen(true), variant: "primary" }, "新建项目"),
         h(Button, { onClick: () => setSettingsOpen(true) }, "设置"),
@@ -940,16 +940,14 @@ window.__ModuleLoader__.load({
         }
       };
       const promptCard = {
-        border: `1px solid ${SOFT_BORDER}`,
-        borderRadius: 12,
-        padding: 16,
-        marginBottom: 16,
-        background: "var(--dsw-alias-bg-layer-2, rgba(128,128,128,.055))",
+        padding: "0 0 22px",
+        marginBottom: 22,
+        borderBottom: `1px solid ${BORDER}`,
+        background: "transparent",
       };
-      const moduleTitle = (title, style = {}) => h("div", { style: { display: "flex", alignItems: "center", gap: 8, minWidth: 0, ...style } },
-        h("span", { style: { width: 3, height: 14, borderRadius: 2, background: ACCENT, flex: "0 0 auto" } }),
-        h("div", { style: { ...S.h2, fontSize: 14, fontWeight: 650, lineHeight: 1.4 } }, title)
-      );
+      const moduleTitle = (title, style = {}) => h("div", {
+        style: { ...S.h2, fontSize: 13.5, fontWeight: 650, letterSpacing: ".005em", lineHeight: 1.45, ...style },
+      }, title);
       const sectionHeader = (title, right = null, hint = "") => h("div", { style: { marginBottom: 12 } },
         h("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 } },
           moduleTitle(title),
@@ -962,10 +960,64 @@ window.__ModuleLoader__.load({
       const promptDoc = {
         border: `1px solid ${SOFT_BORDER}`,
         borderRadius: 10,
-        padding: "12px 14px",
+        padding: 0,
+        overflow: "hidden",
         background: "var(--dsw-alias-bg-base, rgba(128,128,128,.035))",
         fontSize: 13,
         lineHeight: 1.8,
+      };
+      const promptDocHead = {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 10,
+        padding: "9px 14px",
+        borderBottom: `1px solid ${BORDER}`,
+        background: "var(--dsw-alias-bg-layer-2, rgba(128,128,128,.035))",
+      };
+      const promptDocBody = { padding: "13px 15px 15px" };
+      const promptDocChip = {
+        display: "inline-flex",
+        alignItems: "center",
+        border: `1px solid ${SOFT_BORDER}`,
+        borderRadius: 999,
+        padding: "2px 7px",
+        color: MUTED,
+        fontSize: 9.5,
+        lineHeight: 1.5,
+      };
+      const promptDocChipEditable = {
+        ...promptDocChip,
+        color: ACCENT,
+        borderColor: `${ACCENT}55`,
+        background: `${ACCENT}0f`,
+      };
+      const segmented = {
+        display: "inline-flex",
+        gap: 2,
+        padding: 3,
+        border: `1px solid ${SOFT_BORDER}`,
+        borderRadius: 8,
+        background: "var(--dsw-alias-bg-base, rgba(128,128,128,.035))",
+      };
+      const segment = {
+        appearance: "none",
+        border: "1px solid transparent",
+        borderRadius: 6,
+        padding: "6px 12px",
+        background: "transparent",
+        color: MUTED,
+        fontFamily: "inherit",
+        fontSize: 11.5,
+        cursor: "pointer",
+      };
+      const segmentActive = {
+        ...segment,
+        border: `1px solid ${SOFT_BORDER}`,
+        background: "var(--dsw-alias-bg-layer-2, rgba(128,128,128,.16))",
+        color: TEXT,
+        fontWeight: 600,
+        boxShadow: "0 1px 2px rgba(0,0,0,.22)",
       };
       const promptFixedLine = { ...S.muted, fontSize: 12, lineHeight: 1.75, whiteSpace: "pre-wrap" };
       const inlineSkillInput = {
@@ -990,16 +1042,12 @@ window.__ModuleLoader__.load({
         html: { file: "renders/html/P02.html", skill: "html-layout", note: DEFAULT_TARGET_NOTES.html },
       };
       const example = examples[renderTarget];
-      const tabs = h("div", { style: { display: "flex", gap: 4, borderBottom: `1px solid ${BORDER}`, marginBottom: 14, flex: "0 0 auto" } },
-        [["prompts", "提示词设置"], ["reference", "参考库"], ["advanced", "其他设置"]].map(([key, label]) =>
-          h("button", {
-            key,
-            type: "button",
-            style: activeTab === key ? S.tabActive : S.tab,
-            onClick: () => setActiveTab(key),
-          }, label)
-        )
-      );
+      const settingsTabs = [
+        { id: "prompts", label: "提示词设置", hint: "内容、版式与生成规则", icon: "◧" },
+        { id: "reference", label: "参考库", hint: "页面参考与检索库", icon: "▤" },
+        { id: "advanced", label: "其他设置", hint: "路径、能力与诊断", icon: "⚙" },
+      ];
+      const activeMeta = settingsTabs.find((item) => item.id === activeTab) || settingsTabs[0];
       const contentSkillName = String(skills.content || "").trim();
       const contentSkillParts = DEFAULT_START_INSTRUCTION.split("page-content");
       const contentSkillPrefix = contentSkillParts[0] || "";
@@ -1020,14 +1068,23 @@ window.__ModuleLoader__.load({
           h("div", { style: { ...S.muted, marginBottom: 10, fontSize: 12, lineHeight: 1.7 } },
             "新建项目或空白页首次打开时发送。下面这块就是实际发送内容；项目目录在运行时自动填入。"
           ),
-          h("div", { style: { ...S.row, flexWrap: "wrap", marginBottom: 12 } },
-            [["skill", "调用内容技能"], ["builtin", "不调用内容技能"]].map(([key, label]) => h(Button, {
+          h("div", { style: { ...segmented, marginBottom: 12 } },
+            [["skill", "调用内容技能"], ["builtin", "不调用内容技能"]].map(([key, label]) => h("button", {
               key,
-              variant: contentMode === key ? "primary" : "ghost",
+              type: "button",
+              style: contentMode === key ? segmentActive : segment,
               onClick: () => setContentMode(key),
             }, label))
           ),
           h("div", { style: promptDoc },
+            h("div", { style: promptDocHead },
+              h("div", { style: { fontSize: 11, color: MUTED, letterSpacing: ".02em" } }, "实际发送内容"),
+              h("div", { style: { display: "flex", gap: 5 } },
+                h("span", { style: promptDocChip }, "固定规则"),
+                h("span", { style: promptDocChipEditable }, "可编辑")
+              )
+            ),
+            h("div", { style: promptDocBody },
             h("div", { style: promptFixedLine }, "项目目录：<项目根>"),
             h("div", { style: promptFixedLine }, "需求文件：content/brief.md，需求附件在 content/input/。"),
             contentMode === "skill" ? h("div", { style: { marginTop: 8 } },
@@ -1077,6 +1134,7 @@ window.__ModuleLoader__.load({
                 onChange: (event) => setContentPrompt(event.target.value),
               })
             )
+          )
           )
         ),
         h("div", { style: promptCard },
@@ -1161,8 +1219,9 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
         h("div", { style: { ...S.row, justifyContent: "space-between", alignItems: "flex-start" } },
           h("div", { style: { minWidth: 0 } },
             h("div", { style: { display: "flex", alignItems: "center", gap: 6, minWidth: 0 } },
+              h("span", { style: { ...S.dot, background: library.ok ? "#2f8f5b" : "#d9534f", flex: "0 0 auto" } }),
               h("span", { style: { fontWeight: 650, fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, library.name),
-              library.active ? h("span", { style: { ...S.badge, color: ACCENT, borderColor: `${ACCENT}55`, fontSize: 10.5 } }, "当前使用") : null
+              library.active ? h("span", { style: { ...S.badge, color: ACCENT, borderColor: `${ACCENT}44`, background: `${ACCENT}0d`, fontSize: 10 } }, "当前使用") : null
             ),
             h("div", { style: { ...S.muted, marginTop: 3, fontSize: 11, lineHeight: 1.6 } },
               `${library.ok ? `${library.pages} 页` : "不可用"}${library.builtAt ? ` · ${new Date(library.builtAt).toLocaleString("zh-CN", { hour12: false })}` : ""}`
@@ -1194,7 +1253,9 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
               : h(Empty, { text: multiLibraryReady ? "还没有参考库。在下面新建第一个库。" : "当前 DSH 宿主还没有加载多参考库接口。" })
           ),
         ),
-        multiLibraryReady ? h("div", { style: promptCard },
+        multiLibraryReady ? h("div", {
+          style: { ...promptCard, border: `1px dashed ${SOFT_BORDER}`, borderRadius: 10, padding: 14, marginBottom: 0 },
+        },
           sectionHeader("新建参考库", h("div", { style: { ...S.muted, fontSize: 11 } }, referenceLibraries.length ? "" : "第一个库构建成功后会自动设为当前库")),
           h("div", { style: { ...S.row, alignItems: "stretch", marginBottom: 8 } },
             h("input", {
@@ -1267,28 +1328,140 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
         ),
         h("div", { style: promptCard },
           sectionHeader("诊断与重置", null,
-            "当前插件 v0.1.46。参考库状态和内容技能状态会随保存刷新。"),
+            "当前插件 v0.1.47。参考库状态和内容技能状态会随保存刷新。"),
           h("div", { style: { ...S.row, flexWrap: "wrap" } },
             h(Button, { variant: "ghost", onClick: () => void refreshCapabilities() }, "刷新能力状态"),
             h(Button, { variant: "ghost", onClick: resetPrompts }, "恢复默认提示词")
           )
         ),
       ];
+      const SS = {
+        shell: {
+          width: "min(1120px, calc(100vw - 48px))",
+          height: "min(740px, calc(100vh - 48px))",
+          minHeight: 520,
+          boxSizing: "border-box",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          background: SURFACE,
+          color: TEXT,
+          border: `1px solid ${BORDER}`,
+          borderRadius: 14,
+          boxShadow: "0 28px 80px rgba(0,0,0,.42)",
+        },
+        body: { flex: "1 1 auto", minHeight: 0, display: "grid", gridTemplateColumns: "216px minmax(0, 1fr)" },
+        rail: {
+          minHeight: 0,
+          background: "var(--dsw-alias-bg-layer-2, rgba(128,128,128,.055))",
+          borderRight: `1px solid ${BORDER}`,
+          padding: "20px 12px 16px",
+          display: "flex",
+          flexDirection: "column",
+        },
+        brand: { padding: "2px 10px 22px" },
+        brandEyebrow: { fontSize: 9.5, letterSpacing: ".16em", color: MUTED, textTransform: "uppercase" },
+        brandTitle: { margin: "7px 0 0", fontSize: 18, fontWeight: 650, letterSpacing: "-.01em" },
+        railLabel: { padding: "0 10px 8px", color: MUTED, fontSize: 9.5, letterSpacing: ".12em" },
+        nav: { display: "flex", flexDirection: "column", gap: 3 },
+        navItem: {
+          position: "relative",
+          width: "100%",
+          display: "flex",
+          alignItems: "flex-start",
+          gap: 10,
+          padding: "10px 10px",
+          border: "1px solid transparent",
+          borderRadius: 8,
+          background: "transparent",
+          color: MUTED,
+          textAlign: "left",
+          fontFamily: "inherit",
+          cursor: "pointer",
+        },
+        navItemActive: {
+          position: "relative",
+          width: "100%",
+          display: "flex",
+          alignItems: "flex-start",
+          gap: 10,
+          padding: "10px 10px",
+          border: `1px solid ${SOFT_BORDER}`,
+          borderRadius: 8,
+          background: "var(--dsw-alias-bg-layer-1, rgba(128,128,128,.08))",
+          color: TEXT,
+          textAlign: "left",
+          fontFamily: "inherit",
+          cursor: "pointer",
+        },
+        navIcon: { width: 15, flex: "0 0 auto", textAlign: "center", fontSize: 13, lineHeight: "18px", opacity: .8 },
+        navTitle: { display: "block", fontSize: 12.5, lineHeight: 1.5, fontWeight: 550 },
+        navHint: { display: "block", marginTop: 2, fontSize: 10, lineHeight: 1.5, color: MUTED, fontWeight: 400 },
+        railFoot: { marginTop: "auto", padding: "12px 10px 0", borderTop: `1px solid ${BORDER}`, color: MUTED, fontSize: 10, lineHeight: 1.7 },
+        main: { minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column" },
+        top: { flex: "0 0 auto", padding: "22px 28px 0", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 },
+        crumb: { color: MUTED, fontSize: 9.5, letterSpacing: ".12em", textTransform: "uppercase" },
+        pageTitle: { margin: "7px 0 0", fontSize: 20, fontWeight: 650, letterSpacing: "-.015em" },
+        pageSub: { margin: "6px 0 0", color: MUTED, fontSize: 11.5, lineHeight: 1.7 },
+        close: { appearance: "none", border: 0, background: "transparent", color: MUTED, fontSize: 20, lineHeight: 1, padding: 3, cursor: "pointer", fontFamily: "inherit" },
+        content: { flex: "1 1 auto", minHeight: 0, overflow: "auto", scrollbarGutter: "stable", padding: "20px 28px 20px" },
+        error: { margin: "0 28px 10px", padding: "8px 10px", border: "1px solid rgba(217,83,79,.35)", borderRadius: 7, background: "rgba(217,83,79,.08)", color: "#d9534f", fontSize: 11.5, lineHeight: 1.7 },
+        footer: { flex: "0 0 56px", borderTop: `1px solid ${BORDER}`, background: "var(--dsw-alias-bg-layer-2, rgba(128,128,128,.035))", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "0 18px 0 20px" },
+        footerLeft: { display: "flex", alignItems: "center", gap: 6, minWidth: 0, color: MUTED, fontSize: 10.5, lineHeight: 1.5 },
+        footerDot: { width: 5, height: 5, borderRadius: 999, flex: "0 0 auto", background: "currentColor" },
+        footerActions: { display: "flex", alignItems: "center", gap: 8, flex: "0 0 auto" },
+      };
+      const footerStatus = error || copyHint || (busy ? "保存中…" : dirty ? "有未保存更改" : "所有更改已保存");
+      const footerTone = error ? "#d9534f" : dirty ? ACCENT : "#2f8f5b";
+      const activeContent = activeTab === "prompts" ? contentTab : activeTab === "reference" ? referenceTab : advancedContent;
       return h("div", { style: S.overlay, onMouseDown: (event) => { if (event.target === event.currentTarget) requestClose(); } },
-        h("div", { style: S.modalFixed },
-          h("div", { style: { ...S.row, justifyContent: "space-between", flex: "0 0 auto", marginBottom: 12 } },
-            h("div", { style: S.h1 }, "工作台设置"),
-            h(Button, { variant: "ghost", onClick: requestClose, disabled: busy || referenceBusy }, "关闭")
+        h("div", { style: SS.shell },
+          h("div", { style: SS.body },
+            h("aside", { style: SS.rail },
+              h("div", { style: SS.brand },
+                h("div", { style: SS.brandEyebrow }, "Deck Workbench"),
+                h("div", { style: SS.brandTitle }, "工作台设置")
+              ),
+              h("div", { style: SS.railLabel }, "SETTINGS"),
+              h("div", { style: SS.nav },
+                settingsTabs.map((tab) => h("button", {
+                  key: tab.id,
+                  type: "button",
+                  style: activeTab === tab.id ? SS.navItemActive : SS.navItem,
+                  onClick: () => setActiveTab(tab.id),
+                },
+                  activeTab === tab.id ? h("span", { style: { position: "absolute", left: 0, top: 9, bottom: 9, width: 2, borderRadius: 2, background: ACCENT } }) : null,
+                  h("span", { style: SS.navIcon }, tab.icon),
+                  h("span", null,
+                    h("span", { style: SS.navTitle }, tab.label),
+                    h("span", { style: SS.navHint }, tab.hint)
+                  )
+                ))
+              ),
+              h("div", { style: SS.railFoot }, "设置只影响新任务", h("br"), "已有项目不会自动迁移")
+            ),
+            h("main", { style: SS.main },
+              h("header", { style: SS.top },
+                h("div", null,
+                  h("div", { style: SS.crumb }, "工作台设置 / ", activeMeta.label),
+                  h("div", { style: SS.pageTitle }, activeMeta.label),
+                  h("div", { style: SS.pageSub }, activeMeta.hint)
+                ),
+                h("button", { type: "button", style: SS.close, onClick: requestClose, disabled: busy || referenceBusy, "aria-label": "关闭" }, "×")
+              ),
+              error ? h("div", { style: SS.error }, error) : null,
+              h("div", { style: SS.content }, activeContent)
+            )
           ),
-          tabs,
-          h("div", { style: S.modalBody },
-            activeTab === "prompts" ? contentTab : activeTab === "reference" ? referenceTab : advancedContent
-          ),
-          copyHint ? h("div", { style: { ...S.muted, fontSize: 11, flex: "0 0 auto", paddingTop: 6 } }, copyHint) : null,
-          error ? h("div", { style: { color: "#d9534f", fontSize: 12, flex: "0 0 auto", paddingTop: 8 } }, error) : null,
-          h("div", { style: { ...S.row, justifyContent: "flex-end", flex: "0 0 auto", marginTop: 12, paddingTop: 12, borderTop: `1px solid ${BORDER}` } },
-            h(Button, { variant: "ghost", onClick: requestClose, disabled: busy || referenceBusy }, "取消"),
-            h(Button, { variant: "primary", onClick: () => void save(), disabled: busy || referenceBusy || !dirty }, busy ? "保存中…" : dirty ? "保存" : "已保存")
+          h("footer", { style: SS.footer },
+            h("div", { style: { ...SS.footerLeft, color: footerTone } },
+              h("span", { style: SS.footerDot }),
+              h("span", { style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, footerStatus)
+            ),
+            h("div", { style: SS.footerActions },
+              h(Button, { variant: "ghost", onClick: requestClose, disabled: busy || referenceBusy }, "取消"),
+              h(Button, { variant: "primary", onClick: () => void save(), disabled: busy || referenceBusy || !dirty }, busy ? "保存中…" : "保存")
+            )
           )
         )
       );
