@@ -3,7 +3,7 @@
 > **新 agent / 新对话先读这里。** 本目录随仓库版本控制，只排除在 npm 包外。阅读顺序：本文件 → [SPEC.md](SPEC.md) → [DESIGN.md](DESIGN.md) → [AUDIT.md](AUDIT.md) → [README.md](../README.md)，并遵守 [AGENTS.md](../AGENTS.md) 的编辑边界。
 
 - 快照日期：2026-11-07
-- 当前版本：**0.1.56**
+- 当前版本：**0.1.57**
 - 插件目录：`<插件根>`
 - 设计规格：[SPEC.md](SPEC.md)
 - 使用说明：[README.md](../README.md)
@@ -236,6 +236,14 @@ DELETE /deck-workbench/api/reference/libraries/:id
 - 测试 11 → 16 例：新增批准状态机（`test/approval.test.js`）与 HTML 响应头（`test/http.test.js`）。
 - `dev-docs/` 重新纳入版本控制，只靠 `.npmignore` 与 `package.json files` 排除在包外。
 
+### 0.1.57（2026-11-07）
+
+参考库的回滚路径补上测试，并修掉一个改名的破坏性 bug。
+
+- **bug**：把参考库改成它现在的名字，`uniqueLibraryName` 只看到“目标目录已存在”（那正是它自己），于是推到 `名字-2` 并把目录真的搬过去。现在比较目标路径时会排除库自身，同名改名是 no-op。
+- `test/reference-guards.test.js` 12 个用例：激活时指针写失败要回滚 `activeId`；改名后指针写失败要把目录搬回原名；删除拒绝在用库 / 根目录 / 库外路径 / 不存在的 id；改名拒绝库外路径、同名 no-op、撞名自动加后缀且不覆盖已有目录；`ensureRegistry` 清理失效指针、无 activeId 时提升第一个、库外库登记为 legacy 且不搬动；`libraryStatus` 缺索引判不可用、manifest 页数优先；列表把在用库排在最前；`sanitizeLibraryName` 处理 `.`、长度截断、结尾点。
+- 测试总数 40 → 52。
+
 ### 0.1.56（2026-11-07）
 
 客户端纯函数补上单元测试，仍然没有构建步骤。
@@ -293,7 +301,7 @@ DELETE /deck-workbench/api/reference/libraries/:id
 
 优先顺序：
 
-1. 确认真实 DSH 已加载 0.1.56：设置三个标签、参考库状态/校验、可选内容技能/默认文案、图片按钮、项目列表；
+1. 确认真实 DSH 已加载 0.1.57：设置三个标签、参考库状态/校验、可选内容技能/默认文案、图片按钮、项目列表；
 2. 新建真实项目走“会话 → 蓝图 → 页面 → 生成 PPTX/图片/HTML”全链路，验证共享参考库下的 PPTX/HTML/图片输出；
 3. 验证 `html-layout` / `image-layout` 的独立加载和真实页面出图/HTML，再清理退役备份与技能内参考副本；
 4. 完成参考库构建器的 agent 标注闭环与开源整理；
