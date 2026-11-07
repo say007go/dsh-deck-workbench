@@ -3,7 +3,7 @@
 > **新 agent / 新对话先读这里。** 本目录随仓库版本控制，只排除在 npm 包外。阅读顺序：本文件 → [SPEC.md](SPEC.md) → [DESIGN.md](DESIGN.md) → [AUDIT.md](AUDIT.md) → [README.md](../README.md)，并遵守 [AGENTS.md](../AGENTS.md) 的编辑边界。
 
 - 快照日期：2026-11-07
-- 当前版本：**0.1.52**
+- 当前版本：**0.1.53**
 - 插件目录：`<插件根>`
 - 设计规格：[SPEC.md](SPEC.md)
 - 使用说明：[README.md](../README.md)
@@ -236,6 +236,13 @@ DELETE /deck-workbench/api/reference/libraries/:id
 - 测试 11 → 16 例：新增批准状态机（`test/approval.test.js`）与 HTML 响应头（`test/http.test.js`）。
 - `dev-docs/` 重新纳入版本控制，只靠 `.npmignore` 与 `package.json files` 排除在包外。
 
+### 0.1.53（2026-11-07）
+
+- 历史扫描先比 `mtime + size`，文件没动就不读全文；已删除的项目/页面会从内存 cache 里清掉。2s 轮询对多项目不再线性变重。
+- 非预期错误不再把异常文本回给页面：只回 `服务内部错误（8 位 id）`，堆栈带同一个 id 进宿主日志。`handle()` 导出来供测试直接调用。
+- 新建项目不再创建空的 `exports/` 目录（SPEC 中同步删除）。
+- 测试 16 → 25 例：新增 `test/history-watch.test.js`（扫描缓存）与 `test/routes.test.js`（health / settings / 项目列表 / 跨站 403 / 500 脱敏 / 404），路由从零覆盖变成有回归。
+
 ## 7. 待办 / 已知限制
 
 1. 在真实 DSH 主题下最终复测设置页三个标签、内容两种选择、参考库上传/重建/校验、图片能力重新检测和项目根目录保存；组件级测试已通过。
@@ -259,7 +266,7 @@ DELETE /deck-workbench/api/reference/libraries/:id
 
 优先顺序：
 
-1. 确认真实 DSH 已加载 0.1.52：设置三个标签、参考库状态/校验、可选内容技能/默认文案、图片按钮、项目列表；
+1. 确认真实 DSH 已加载 0.1.53：设置三个标签、参考库状态/校验、可选内容技能/默认文案、图片按钮、项目列表；
 2. 新建真实项目走“会话 → 蓝图 → 页面 → 生成 PPTX/图片/HTML”全链路，验证共享参考库下的 PPTX/HTML/图片输出；
 3. 验证 `html-layout` / `image-layout` 的独立加载和真实页面出图/HTML，再清理退役备份与技能内参考副本；
 4. 完成参考库构建器的 agent 标注闭环与开源整理；

@@ -88,7 +88,6 @@
     │   ├── pages.json               # 工作台管理的版本/确认状态
     │   ├── renders.json             # 可选：精确的产物来源
     │   └── .preview/                # PPTX→PNG/PDF 缓存
-    └── exports/                     # 可选
 ```
 
 ### 4.1 文案
