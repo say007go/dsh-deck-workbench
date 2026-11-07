@@ -226,7 +226,7 @@ references/<库名>/
 | 0.1.53 | 2 秒扫描按修改时间短路；内部错误只回带编号的简短消息，不再暴露堆栈 |
 | 0.1.52 | 文案确认状态改为按内容哈希现算（改稿自动回草稿）；产物 HTML 加内容安全策略；并发预览转换去重 |
 
-更早的版本与每个版本的细节见 [dev-docs/CHANGELOG.md](https://github.com/say007go/dsh-deck-workbench/blob/main/dev-docs/CHANGELOG.md)。
+更早的版本与每个版本的细节见 [CHANGELOG.md](https://github.com/say007go/dsh-deck-workbench/blob/main/dev-docs/CHANGELOG.md)（英文版 [CHANGELOG.en.md](https://github.com/say007go/dsh-deck-workbench/blob/main/dev-docs/CHANGELOG.en.md)）。
 
 ## 已知限制
 

@@ -191,7 +191,7 @@ DELETE /deck-workbench/api/reference/libraries/:id
 
 ### 6.4 历史
 
-逐版本变更见 [CHANGELOG.md](CHANGELOG.md)：0.1.52 起有完整记录，0.1.30–0.1.51 的阶段记录（参考库外置、技能拆分、内置技能、设置重构）在该文件附录。
+逐版本变更见 [CHANGELOG.md](CHANGELOG.md)：0.1.52 起有完整记录，0.1.30–0.1.51 的阶段记录（参考库外置、技能拆分、内置技能、设置重构）在该文件附录。英文版是 [CHANGELOG.en.md](CHANGELOG.en.md)，附录为摘要，细节以中文版为准。
 
 ## 7. 待办 / 已知限制
 
