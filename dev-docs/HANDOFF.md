@@ -3,7 +3,7 @@
 > **新 agent / 新对话先读这里。** 本目录随仓库版本控制，只排除在 npm 包外。阅读顺序：本文件 → [SPEC.md](SPEC.md) → [DESIGN.md](DESIGN.md) → [AUDIT.md](AUDIT.md) → [README.md](../README.md)，并遵守 [AGENTS.md](../AGENTS.md) 的编辑边界。
 
 - 快照日期：2026-11-07
-- 当前版本：**0.1.53**
+- 当前版本：**0.1.54**
 - 插件目录：`<插件根>`
 - 设计规格：[SPEC.md](SPEC.md)
 - 使用说明：[README.md](../README.md)
@@ -236,6 +236,16 @@ DELETE /deck-workbench/api/reference/libraries/:id
 - 测试 11 → 16 例：新增批准状态机（`test/approval.test.js`）与 HTML 响应头（`test/http.test.js`）。
 - `dev-docs/` 重新纳入版本控制，只靠 `.npmignore` 与 `package.json files` 排除在包外。
 
+### 0.1.54（2026-11-07）
+
+读盘和人眼的节奏对齐：不再为「看一眼」付出全量 I/O。
+
+- 页面元信息按 `mtimeMs + size` 缓存，列表与详情不再重复读全文算 hash；`readPage` 不再二次读页面与历史。
+- 产物目录每个项目只 `readdir` 一次，缺失的候选文件不再逐个 `stat`；页面摘要 8 路并发。
+- 前端轮询只在窗口可见时进行（列表 10s、详情 8s），切回前台立刻补一次；详情轮询加防重入。
+- 文件响应带 `ETag` 与 304 再验证，预览图/PDF 重复打开不再整段重传。
+- 新增 `npm run bench`：900 文件的临时库上 `listProjects` 127ms → 19ms，`loadProject` 31ms → 4.6ms。
+
 ### 0.1.53（2026-11-07）
 
 - 历史扫描先比 `mtime + size`，文件没动就不读全文；已删除的项目/页面会从内存 cache 里清掉。2s 轮询对多项目不再线性变重。
@@ -266,7 +276,7 @@ DELETE /deck-workbench/api/reference/libraries/:id
 
 优先顺序：
 
-1. 确认真实 DSH 已加载 0.1.53：设置三个标签、参考库状态/校验、可选内容技能/默认文案、图片按钮、项目列表；
+1. 确认真实 DSH 已加载 0.1.54：设置三个标签、参考库状态/校验、可选内容技能/默认文案、图片按钮、项目列表；
 2. 新建真实项目走“会话 → 蓝图 → 页面 → 生成 PPTX/图片/HTML”全链路，验证共享参考库下的 PPTX/HTML/图片输出；
 3. 验证 `html-layout` / `image-layout` 的独立加载和真实页面出图/HTML，再清理退役备份与技能内参考副本；
 4. 完成参考库构建器的 agent 标注闭环与开源整理；

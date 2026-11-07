@@ -1,6 +1,6 @@
 {
   "name": "dsh-deck-workbench",
-  "version": "0.1.53",
+  "version": "0.1.54",
   "description": "DSH 方案工作台：新建项目、导入需求、项目内容对话、文案版本与 HTML/图片/PPTX 产物预览。",
   "icon": "./icon.svg",
   "type": "module",
@@ -42,6 +42,7 @@
     }
   },
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "bench": "node scripts/bench-projects.mjs"
   }
 }

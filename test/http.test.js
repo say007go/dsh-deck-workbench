@@ -8,7 +8,7 @@ import { sendFile } from '../lib/http.js'
 
 async function serve(file) {
   const server = createServer((req, res) => {
-    sendFile(res, file).catch((error) => {
+    sendFile(res, file, undefined, req).catch((error) => {
       res.writeHead(500)
       res.end(String(error))
     })
@@ -46,6 +46,32 @@ test('other content types keep the plain header set', async () => {
     assert.equal(res.status, 200)
     assert.equal(res.headers.get('content-security-policy'), null)
     assert.equal(res.headers.get('x-content-type-options'), 'nosniff')
+  } finally {
+    await close()
+    await rm(dir, { recursive: true, force: true })
+  }
+})
+
+test('unchanged files answer 304 to a revalidation request', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'deck-workbench-http-'))
+  const file = join(dir, 'page.png')
+  await writeFile(file, Buffer.alloc(2048, 7))
+  const { url, close } = await serve(file)
+  try {
+    const first = await fetch(url)
+    assert.equal(first.status, 200)
+    const etag = first.headers.get('etag')
+    assert.ok(etag, 'response should carry an etag')
+    await first.arrayBuffer()
+
+    const second = await fetch(url, { headers: { 'if-none-match': etag } })
+    assert.equal(second.status, 304)
+    assert.equal(await second.arrayBuffer().then((b) => b.byteLength), 0)
+
+    await writeFile(file, Buffer.alloc(4096, 7))
+    const third = await fetch(url, { headers: { 'if-none-match': etag } })
+    assert.equal(third.status, 200)
+    assert.notEqual(third.headers.get('etag'), etag)
   } finally {
     await close()
     await rm(dir, { recursive: true, force: true })

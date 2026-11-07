@@ -7,6 +7,22 @@ window.__ModuleLoader__.load({
     const { useState, useEffect, useMemo, useRef } = React;
 
     const services = { sessions: null, uiWorkspace: null, workspaces: null };
+
+    // 桌面壳最小化 / 切走后没人看画面，轮询只是白烧 CPU 和文件句柄；
+    // 回到前台时立刻补一次，避免等下一个周期。
+    const useVisiblePolling = (fn, intervalMs) => {
+      const ref = useRef(fn);
+      ref.current = fn;
+      useEffect(() => {
+        const tick = () => { if (!document.hidden) void ref.current(); };
+        const timer = setInterval(tick, intervalMs);
+        document.addEventListener("visibilitychange", tick);
+        return () => {
+          clearInterval(timer);
+          document.removeEventListener("visibilitychange", tick);
+        };
+      }, [intervalMs]);
+    };
     const ACCENT = "#AD0101";
     const BORDER = "var(--dsw-alias-border-l1, rgba(128,128,128,.22))";
     const SOFT_BORDER = "rgba(128,128,128,.20)";
@@ -649,9 +665,9 @@ window.__ModuleLoader__.load({
       useEffect(() => {
         void loadProjects();
         void loadSettings();
-        const timer = setInterval(() => { void loadProjects(true); }, 10000);
-        return () => clearInterval(timer);
       }, []);
+      // 项目列表：窗口可见时每 10s 刷新一次
+      useVisiblePolling(() => loadProjects(true), 10000);
 
       const header = h("div", { style: S.top },
         h("div", { style: { flex: "1 1 auto", minWidth: 180 } },
@@ -1724,7 +1740,10 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
         }
       };
 
+      const refreshingRef = useRef(false);
       const refresh = async () => {
+        if (refreshingRef.current) return;
+        refreshingRef.current = true;
         try {
           const data = await requestJson(`api/projects/${encodeURIComponent(project.id)}`);
           setProject(data.project);
@@ -1736,14 +1755,14 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
           await onRefresh();
         } catch (cause) {
           showToast(cause.message || String(cause));
+        } finally {
+          refreshingRef.current = false;
         }
       };
 
       useEffect(() => { void loadPage(pageId); }, [pageId]);
-      useEffect(() => {
-        const timer = setInterval(() => { void refresh(); }, 8000);
-        return () => clearInterval(timer);
-      }, [pageId, project.id]);
+      // 项目详情：可见时每 8s 对账；不可见就停，回到前台立刻补一次
+      useVisiblePolling(refresh, 8000);
 
       const availableTabs = useMemo(() => {
         if (!page) return [];
