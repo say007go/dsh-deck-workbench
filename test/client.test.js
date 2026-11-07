@@ -186,3 +186,10 @@ test('buildOptimizePrompt keeps the page scope and the feedback', () => {
   assert.match(prompt, /反馈：第二段太满，删掉一句/)
   assert.match(prompt, /请只优化这一页/)
 })
+
+test('客户端不依赖宿主已禁用的原生对话框', async () => {
+  const source = await readFile(new URL('../client/client.js', import.meta.url), 'utf8')
+  for (const banned of ['window.confirm(', 'window.prompt(', 'window.alert(', 'target="_blank"']) {
+    assert.equal(source.includes(banned), false, `client/client.js 仍在用 ${banned}`)
+  }
+})

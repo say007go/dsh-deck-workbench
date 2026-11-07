@@ -467,6 +467,80 @@ window.__ModuleLoader__.load({
       return sessionId;
     }
 
+    // ---- 3.5 应用内阻塞对话框 ----
+    // 宿主是 Electron：Chromium 不实现 window.prompt，webview 又设了 disableDialogs，
+    // window.confirm 也一律返回 false。重命名、删除确认这类对话框只能自己画。
+    const dialogStore = { current: null, listener: null };
+
+    function openDialog(dialog) {
+      return new Promise((resolve) => {
+        dialogStore.current = { ...dialog, resolve };
+        dialogStore.listener?.();
+      });
+    }
+
+    function askConfirm(message, options = {}) {
+      return openDialog({
+        kind: "confirm",
+        title: options.title || "请确认",
+        message,
+        okText: options.okText || "确定",
+      });
+    }
+
+    function askText(title, initial, options = {}) {
+      return openDialog({
+        kind: "text",
+        title,
+        message: options.message || "",
+        value: initial || "",
+        okText: options.okText || "确定",
+      });
+    }
+
+    function DialogHost() {
+      const [, force] = useState(0);
+      const [value, setValue] = useState("");
+      useEffect(() => {
+        dialogStore.listener = () => {
+          setValue(dialogStore.current?.value || "");
+          force((n) => n + 1);
+        };
+        return () => { dialogStore.listener = null; };
+      }, []);
+      const dialog = dialogStore.current;
+      if (!dialog) return null;
+      const finish = (result) => {
+        const pending = dialogStore.current;
+        dialogStore.current = null;
+        force((n) => n + 1);
+        pending?.resolve(result);
+      };
+      const confirm = () => finish(dialog.kind === "text" ? value.trim() : true);
+      const cancel = () => finish(dialog.kind === "text" ? null : false);
+      return h("div", {
+        style: { ...S.overlay, zIndex: 4000 },
+        onMouseDown: (event) => { if (event.target === event.currentTarget) cancel(); },
+        onKeyDown: (event) => { if (event.key === "Escape") { event.preventDefault(); cancel(); } },
+      },
+        h("div", { style: { ...S.modal, width: "min(460px, 92vw)", padding: 18 }, role: "dialog", "aria-modal": "true" },
+          h("div", { style: { ...TYPE.section, marginBottom: dialog.message ? 8 : 14 } }, dialog.title),
+          dialog.message ? h("div", { style: { ...TYPE.body, color: MUTED, whiteSpace: "pre-wrap", marginBottom: 14 } }, dialog.message) : null,
+          dialog.kind === "text" ? h("input", {
+            autoFocus: true,
+            value,
+            onChange: (event) => setValue(event.target.value),
+            onKeyDown: (event) => { if (event.key === "Enter") { event.preventDefault(); confirm(); } },
+            style: { ...S.input, boxSizing: "border-box" },
+          }) : null,
+          h("div", { style: { ...S.row, justifyContent: "flex-end", marginTop: 16 } },
+            h(Button, { variant: "ghost", onClick: cancel }, "取消"),
+            h(Button, { variant: "primary", onClick: confirm }, dialog.okText || "确定")
+          )
+        )
+      );
+    }
+
     // ---- 4. 提示词构造 ----
     function contentRequirement(settings) {
       const text = String(settings?.contentPrompt || "").trim();
@@ -672,7 +746,8 @@ window.__ModuleLoader__.load({
       };
 
       const deleteProject = async (project) => {
-        if (!window.confirm(`确定删除项目“${project.title}”？\n会删除项目目录 ${project.path}，并清理对应的 DSH workspace/会话关联。`)) return;
+        const confirmed = await askConfirm(`确定删除项目“${project.title}”？\n会删除项目目录 ${project.path}，并清理对应的 DSH workspace/会话关联。`, { title: "删除项目" });
+        if (!confirmed) return;
         try {
           await requestJson(`api/projects/${encodeURIComponent(project.id)}`, { method: "DELETE" });
           let cleanupError = "";
@@ -725,7 +800,8 @@ window.__ModuleLoader__.load({
             onDelete: () => deleteProject(view.project),
             showToast,
           }),
-          h(Toast, { text: toast })
+          h(Toast, { text: toast }),
+          h(DialogHost)
         );
       }
 
@@ -762,7 +838,8 @@ window.__ModuleLoader__.load({
           onClose: () => setSettingsOpen(false),
           onSave: saveSettings,
         }) : null,
-        h(Toast, { text: toast })
+        h(Toast, { text: toast }),
+        h(DialogHost)
       );
     }
 
@@ -806,9 +883,9 @@ window.__ModuleLoader__.load({
         projectsRoot, contentMode, skills, contentPrompt, contentFallbackPrompt, renderPrompts,
       });
       const dirty = currentSnapshot !== initialSnapshot;
-      const requestClose = () => {
+      const requestClose = async () => {
         if (referenceBusy) return;
-        if (dirty && !window.confirm("有未保存的设置修改，放弃修改？")) return;
+        if (dirty && !(await askConfirm("有未保存的设置修改，放弃修改？", { title: "放弃修改" }))) return;
         onClose();
       };
       const updatePrompt = (key, value) => setRenderPrompts((prev) => ({ ...prev, [key]: value }));
@@ -827,8 +904,12 @@ window.__ModuleLoader__.load({
         }
       };
       const pickRoot = async () => {
+        if (typeof services.uiWorkspace?.pickDirectory !== "function") {
+          setError("当前宿主不提供目录选择，直接填写绝对路径即可。");
+          return;
+        }
         try {
-          const picked = await services.uiWorkspace?.pickDirectory?.();
+          const picked = await services.uiWorkspace.pickDirectory();
           if (picked) setProjectsRoot(picked);
         } catch (cause) {
           setError(cause.message || String(cause));
@@ -952,7 +1033,7 @@ window.__ModuleLoader__.load({
         }
       };
       const renameReference = async (library) => {
-        const name = window.prompt("参考库名称", library.name);
+        const name = await askText("重命名参考库", library.name, { message: `改名会连同目录一起移动：${library.root}` });
         if (name === null || !name.trim()) return;
         setReferenceBusy(true);
         setReferenceError("");
@@ -966,7 +1047,7 @@ window.__ModuleLoader__.load({
         }
       };
       const deleteReference = async (library) => {
-        if (!window.confirm(`删除参考库“${library.name}”？\n会删除目录 ${library.root}，且不可恢复。`)) return;
+        if (!(await askConfirm(`删除参考库“${library.name}”？\n会删除目录 ${library.root}，且不可恢复。`, { title: "删除参考库" }))) return;
         setReferenceBusy(true);
         setReferenceError("");
         try {
@@ -1026,8 +1107,8 @@ window.__ModuleLoader__.load({
           setImagegenChecking(false);
         }
       };
-      const resetPrompts = () => {
-        if (!window.confirm("把内容要求、内置内容提示词和页面取舍规则恢复到默认值？")) return;
+      const resetPrompts = async () => {
+        if (!(await askConfirm("把内容要求、内置内容提示词和页面取舍规则恢复到默认值？", { title: "恢复默认" }))) return;
         setContentPrompt(defaults.contentPrompt);
         setContentFallbackPrompt(defaults.contentFallbackPrompt);
         setRenderPrompts({ ...defaults.renderPrompts });
@@ -1464,7 +1545,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
             "当前插件 v" + (version || "未加载") + "。参考库状态和内容技能状态会随保存刷新。"),
           h("div", { style: { ...S.row, flexWrap: "wrap" } },
             h(Button, { variant: "ghost", onClick: () => void refreshCapabilities() }, "刷新能力状态"),
-            h(Button, { variant: "ghost", onClick: resetPrompts }, "恢复默认提示词")
+            h(Button, { variant: "ghost", onClick: () => void resetPrompts() }, "恢复默认提示词")
           )
         ),
       ];
@@ -1569,7 +1650,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
       const footerTone = error ? DANGER : dirty ? ACCENT : SUCCESS;
       const activeContent = activeTab === "prompts" ? contentTab : activeTab === "reference" ? referenceTab : advancedContent;
       // -- 6.3 弹窗骨架：左侧导航 + 右侧面板 --
-      return h("div", { style: S.overlay, onMouseDown: (event) => { if (event.target === event.currentTarget) requestClose(); } },
+      return h("div", { style: S.overlay, onMouseDown: (event) => { if (event.target === event.currentTarget) void requestClose(); } },
         h("div", { style: SS.shell },
           h("div", { style: SS.body },
             h("aside", { style: SS.rail },
@@ -1601,7 +1682,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
                   h("div", { style: SS.pageTitle }, activeMeta.label),
                   h("div", { style: SS.pageSub }, activeMeta.hint)
                 ),
-                h("button", { type: "button", style: SS.close, onClick: requestClose, disabled: busy || referenceBusy, "aria-label": "关闭" }, "×")
+                h("button", { type: "button", style: SS.close, onClick: () => void requestClose(), disabled: busy || referenceBusy, "aria-label": "关闭" }, "×")
               ),
               error ? h("div", { style: SS.error }, error) : null,
               h("div", { style: SS.content }, activeContent)
@@ -1613,7 +1694,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
               h("span", { style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, footerStatus)
             ),
             h("div", { style: SS.footerActions },
-              h(Button, { variant: "ghost", onClick: requestClose, disabled: busy || referenceBusy }, "取消"),
+              h(Button, { variant: "ghost", onClick: () => void requestClose(), disabled: busy || referenceBusy }, "取消"),
               h(Button, { variant: "primary", onClick: () => void save(), disabled: busy || referenceBusy || !dirty }, busy ? "保存中…" : "保存")
             )
           )
@@ -2188,7 +2269,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
       };
 
       const restore = async (version) => {
-        if (!window.confirm(`恢复到 v${version}？当前内容会保留在历史里。`)) return;
+        if (!(await askConfirm(`恢复到 v${version}？当前内容会保留在历史里。`, { title: "恢复版本" }))) return;
         setBusy(true);
         try {
           await requestJson(`api/projects/${encodeURIComponent(project.id)}/pages/${encodeURIComponent(page.id)}/restore`, { method: "POST", body: { version } });

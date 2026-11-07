@@ -3,6 +3,21 @@
 > 0.1.52 起的实现变更按版本倒序记录在这里；更早的阶段记录见文末附录。
 > 版本号同时出现在 `package.json`、`README.md` 顶部和 `HANDOFF.md` 顶部，升级时三处一起改。
 
+## 0.1.59 — 2026-11-07
+
+修掉桌面宿主里一批「点了没反应」的按钮：原生 confirm/prompt 被 Electron 禁用。
+
+### 修复
+
+- 根因：Electron 不实现 `window.prompt`（直接返回 `null`），DSH 的 webview 又设了 `disableDialogs: true`，`window.confirm` 一律返回 `false`。于是「参考库重命名」拿到 `null` 就 return，用户看到的是点了没反应；其余确认框也等于被自动取消。
+- 新增应用内对话框：`askConfirm` / `askText` + `DialogHost`（Esc 取消、Enter 确认、点遮罩取消、文本框自动聚焦），替换 6 处原生调用——参考库重命名、删除参考库、删除项目、恢复历史版本、恢复默认提示词、有未保存修改时关闭设置。
+- 「选择目录」在宿主没有 `pickDirectory` 时给出提示，不再静默失败。
+- `test/client.test.js` 增加守卫：客户端源码里出现 `window.confirm(` / `window.prompt(` / `window.alert(` / `target="_blank"` 就让测试失败（这三样在桌面端都不可用）。
+
+### 测试
+
+- 53 → 54 例。
+
 ## 0.1.58 — 2026-11-07
 
 界面上的版本号改为从服务端读取，不再写死。

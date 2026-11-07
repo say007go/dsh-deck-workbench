@@ -4,6 +4,26 @@
 > primary record and also carries the detailed 0.1.30–0.1.51 history; the appendix below is a summary.
 > The version number lives in `package.json`, the top of `README.md`, and the top of `HANDOFF.md` — bump all three together.
 
+## 0.1.59 — 2026-11-07
+
+Fixes the buttons that did nothing in the desktop host: native confirm/prompt are disabled in Electron.
+
+### Fixed
+
+- Root cause: Electron does not implement `window.prompt` (it returns `null`), and DSH's webview sets
+  `disableDialogs: true`, so `window.confirm` always returns `false`. "Rename reference library" bailed out
+  on the `null` and looked like a dead button; every other confirmation was silently treated as cancelled.
+- Added in-app dialogs (`askConfirm` / `askText` + `DialogHost`, Esc cancels, Enter confirms, click outside
+  cancels, text field autofocuses) and replaced six native call sites: rename library, delete library,
+  delete project, restore history version, reset default prompts, and closing settings with unsaved changes.
+- "Choose folder" now reports when the host has no `pickDirectory` instead of failing silently.
+- `test/client.test.js` fails if the client source uses `window.confirm(` / `window.prompt(` /
+  `window.alert(` / `target="_blank"`.
+
+### Tests
+
+- 53 → 54.
+
 ## 0.1.58 — 2026-11-07
 
 The version shown in the UI now comes from the server instead of a hardcoded string.
