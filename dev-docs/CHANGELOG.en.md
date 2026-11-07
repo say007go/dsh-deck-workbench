@@ -4,6 +4,19 @@
 > primary record and also carries the detailed 0.1.30–0.1.51 history; the appendix below is a summary.
 > The version number lives in `package.json`, the top of `README.md`, and the top of `HANDOFF.md` — bump all three together.
 
+## 0.1.58 — 2026-11-07
+
+The version shown in the UI now comes from the server instead of a hardcoded string.
+
+### Fixed
+
+- The version label in the workbench header and in the settings dialog were two hardcoded strings (`0.1.51`)
+  in `client/client.js`, so the UI kept reporting an old number long after `package.json` moved on. The host
+  now reads the version from `package.json` and returns it as `version` from `GET/POST /api/settings`; the
+  client renders that value and shows “not loaded” instead of a stale number when the call fails.
+- `test/routes.test.js` asserts that `/api/settings` reports the same version as `package.json`.
+- Test count: 52 → 53.
+
 ## 0.1.57 — 2026-11-07
 
 Tests for the reference-library rollback paths, plus a fix for a destructive rename bug.

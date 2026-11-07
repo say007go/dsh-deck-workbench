@@ -3,7 +3,7 @@
 > **新 agent / 新对话先读这里。** 本目录随仓库版本控制，只排除在 npm 包外。阅读顺序：本文件 → [SPEC.md](SPEC.md) → [DESIGN.md](DESIGN.md) → [AUDIT.md](AUDIT.md) → [README.md](../README.md)，并遵守 [AGENTS.md](../AGENTS.md) 的编辑边界。历史变更查 [CHANGELOG.md](CHANGELOG.md)，本文件只写当前状态。
 
 - 快照日期：2026-11-07
-- 当前版本：**0.1.57**
+- 当前版本：**0.1.58**
 - 插件目录：`<插件根>`
 - 设计规格：[SPEC.md](SPEC.md)
 - 使用说明：[README.md](../README.md)
@@ -168,7 +168,7 @@ DELETE /deck-workbench/api/reference/libraries/:id
 
 ### 6.1 基线
 
-- 版本 **0.1.57**；`npm test` 52 例全绿（`node --test`）。
+- 版本 **0.1.58**；`npm test` 53 例全绿（`node --test`）。
 - 每个改动的 JS 文件提交前跑 `node --check`。客户端没有构建步骤，改完刷新页面即生效；改成 `lib/` 才需要重启 DSH。
 - 工作区行尾是 LF。用脚本改文件时必须按原行尾写回，否则会产出整文件假 diff（踩过三次：`lib/index.js`、`lib/settings.js`、`lib/references.js`）。
 
@@ -197,7 +197,7 @@ DELETE /deck-workbench/api/reference/libraries/:id
 
 ### 7.1 需要真机复测
 
-1. 在真实 DSH 里完整走一遍 0.1.57：设置三个标签、参考库上传/重建/校验、内容两种模式、图片能力重新检测、项目根目录保存。
+1. 在真实 DSH 里完整走一遍 0.1.58：设置三个标签、参考库上传/重建/校验、内容两种模式、图片能力重新检测、项目根目录保存。
 2. 新项目走「会话 → 蓝图 → 页面 → 生成 PPTX/图片/HTML」全链路，重点看共享参考库下的实际产出。
 
 ### 7.2 没有自动化覆盖的地方
@@ -223,7 +223,7 @@ DELETE /deck-workbench/api/reference/libraries/:id
 
 优先顺序：
 
-1. 真机复测 0.1.57（第 7.1 节两条），有偏差先修，再谈新功能。
+1. 真机复测 0.1.58（第 7.1 节两条），有偏差先修，再谈新功能。
 2. 等真实使用反馈再决定客户端是否要拆：触发条件是「出现第二个前端开发者」「文件超过 3000 行」「组件间传 5 个以上 props 或需要引第三方库」。到那天再上 esbuild（`client/src/*.js` → `client/client.js`，配 `--watch`），不要提前加构建步骤——它会破坏 link 安装下“改完刷新即生效”的开发方式。
 3. 想再提升稳健性，性价比最高的是给 `preview.js` 加集成测试（临时 PPTX + 真实 soffice，缺失时 skip）。
 4. 参考库构建器的标注闭环与开源整理（去私有 skill 名、去品牌色硬编码、参考稿不入库）。

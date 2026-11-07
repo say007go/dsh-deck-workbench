@@ -73,7 +73,9 @@ window.__ModuleLoader__.load({
     const TEXT = "var(--dsw-alias-label-primary, inherit)";
     const TARGET_ORDER = ["pptx", "image", "html"];
     const TARGET_LABELS = { pptx: "PPTX", image: "图片", html: "HTML" };
-    // 默认值只存在于服务端 lib/settings.js；这里缓存 /api/settings 返回的 defaults。
+    // 版本号与默认值都只存在于服务端（package.json 与 lib/settings.js）；
+    // 这里缓存 /api/settings 的返回，界面不写死任何一份。
+    let SERVER_VERSION = "";
     let SERVER_DEFAULTS = {
       renderPrompts: { default: "", preserve: "", compress: "" },
       skills: { content: "" },
@@ -562,6 +564,7 @@ window.__ModuleLoader__.load({
       const [toast, setToast] = useState("");
       const [settings, setSettings] = useState(DEFAULT_SETTINGS);
       const [defaults, setDefaults] = useState(SERVER_DEFAULTS);
+      const [pluginVersion, setPluginVersion] = useState(SERVER_VERSION);
       const [capabilities, setCapabilities] = useState({ reference: null, imagegen: null });
       const [settingsOpen, setSettingsOpen] = useState(false);
       const toastTimer = useRef(null);
@@ -588,6 +591,7 @@ window.__ModuleLoader__.load({
       const loadSettings = async () => {
         try {
           const data = await requestJson("api/settings");
+          if (data.version) { SERVER_VERSION = data.version; setPluginVersion(data.version); }
           if (data.defaults) { SERVER_DEFAULTS = data.defaults; setDefaults(data.defaults); }
           setSettings(data.settings || DEFAULT_SETTINGS);
           setCapabilities({
@@ -601,6 +605,7 @@ window.__ModuleLoader__.load({
 
       const saveSettings = async (next) => {
         const data = await requestJson("api/settings", { method: "POST", body: next });
+        if (data.version) { SERVER_VERSION = data.version; setPluginVersion(data.version); }
         if (data.defaults) { SERVER_DEFAULTS = data.defaults; setDefaults(data.defaults); }
         setSettings(data.settings || DEFAULT_SETTINGS);
         setCapabilities({
@@ -703,7 +708,7 @@ window.__ModuleLoader__.load({
       const header = h("div", { style: S.top },
         h("div", { style: { flex: "1 1 auto", minWidth: 180 } },
           h("div", { style: S.h1 }, "方案工作台"),
-          h("div", { style: S.muted }, "开发者：圣婴 | 微信：say007go | 版本号：0.1.51")
+          h("div", { style: S.muted }, "开发者：圣婴 | 微信：say007go | 版本号：" + (pluginVersion || "未加载"))
         ),
         h(Button, { onClick: () => setNewOpen(true), variant: "primary" }, "新建项目"),
         h(Button, { onClick: () => setSettingsOpen(true) }, "设置"),
@@ -752,6 +757,7 @@ window.__ModuleLoader__.load({
           activeId: capabilities.activeId || null,
           imagegen: capabilities.imagegen,
           defaults,
+          version: pluginVersion,
           onRefresh: loadSettings,
           onClose: () => setSettingsOpen(false),
           onSave: saveSettings,
@@ -761,7 +767,7 @@ window.__ModuleLoader__.load({
     }
 
     // ---- 6. 设置弹窗 ----
-    function SettingsModal({ settings, reference, libraries, activeId, imagegen, defaults, onRefresh, onClose, onSave }) {
+    function SettingsModal({ settings, reference, libraries, activeId, imagegen, defaults, version, onRefresh, onClose, onSave }) {
       const [activeTab, setActiveTab] = useState("prompts");
       const [projectsRoot, setProjectsRoot] = useState(settings?.projectsRoot || "");
       const [contentMode, setContentMode] = useState(settings?.contentMode === "builtin" ? "builtin" : "skill");
@@ -1455,7 +1461,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
         ),
         h("div", { style: promptCard },
           sectionHeader("诊断与重置", null,
-            "当前插件 v0.1.51。参考库状态和内容技能状态会随保存刷新。"),
+            "当前插件 v" + (version || "未加载") + "。参考库状态和内容技能状态会随保存刷新。"),
           h("div", { style: { ...S.row, flexWrap: "wrap" } },
             h(Button, { variant: "ghost", onClick: () => void refreshCapabilities() }, "刷新能力状态"),
             h(Button, { variant: "ghost", onClick: resetPrompts }, "恢复默认提示词")

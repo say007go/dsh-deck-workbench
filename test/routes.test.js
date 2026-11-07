@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { createServer } from 'node:http'
-import { mkdtemp, rm } from 'node:fs/promises'
+import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { handle } from '../lib/index.js'
@@ -33,6 +33,18 @@ test('health reports the configured root', async () => {
     assert.equal(body.ok, true)
     assert.equal(body.name, 'deck-workbench')
     assert.match(body.root, /projects$/)
+  } finally {
+    await app.close()
+  }
+})
+
+test('settings include the package version', async () => {
+  const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'))
+  const app = await start()
+  try {
+    const res = await fetch(`${app.base}/api/settings`)
+    const body = await res.json()
+    assert.equal(body.version, pkg.version)
   } finally {
     await app.close()
   }
