@@ -54,7 +54,7 @@ python assets/build-kit/audit.py --all --pptx 成品.pptx
 - **出页**：`setup_title()` `setup_lead()` `add_textbox()` `add_round_rect()` `add_arrow()`
   `add_strip()` `add_chip()` `bullet_para()` `set_para_multiline()`
 - **度量与预检**：`text_width_in()` `fit_check()` `wrap_manual()` `orphan_check()`
-- **复核**：`audit.py`（八道关）`measure_text_bands()` `lead_clearance_audit()`
+- **复核**：`audit.py`（九道关）`measure_text_bands()` `lead_clearance_audit()`
   `text_overflow_audit()` `type_scale_audit()` `scan_parts.py --skeleton`
 - **自检**：`selfcheck.py`（7 项：语法／导入／文件闭合／文档-实现闭合／探测链路／常量口径／**门禁有效性自证**）
 - **交付**：`merge_pages.py` 合并多页；`render_pdf()` / `render_png()` / `crop_regions()` 渲染链

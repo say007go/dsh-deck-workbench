@@ -12,8 +12,7 @@ _reference/
 **/_reference/
 **/reference.pptx
 
-# Internal development docs are local-only, not part of the public repo/package.
-dev-docs/
+# dev-docs/ 跟代码一起进仓库；挡在 npm 包外由 .npmignore 与 package.json files 负责。
 
 # Runtime reference libraries (outside the plugin checkout by default).
 /references/

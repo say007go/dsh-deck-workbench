@@ -30,10 +30,12 @@ window.__ModuleLoader__.load({
     const TEXT = "var(--dsw-alias-label-primary, inherit)";
     const TARGET_ORDER = ["pptx", "image", "html"];
     const TARGET_LABELS = { pptx: "PPTX", image: "图片", html: "HTML" };
-    const DEFAULT_RENDER_PROMPTS = {
-      default: "按技能默认规则决定版式与文案取舍。",
-      preserve: "本页文案必须完全保留，不得增删、替换或改写文字内容；只允许断行、分段和版式层级调整。如果页面放不下，停止制作并说明容量不足，不要自行删减。",
-      compress: "本页允许为版式需要取词、删词、断行、短标题提炼和层级重组；不得新增内容，不得改变事实、数据、主体、承诺与结论，关键数字、专有名词和限定语必须保留。如果压缩导致语义变化，停止并说明。",
+    // 默认值只存在于服务端 lib/settings.js；这里缓存 /api/settings 返回的 defaults。
+    let SERVER_DEFAULTS = {
+      renderPrompts: { default: "", preserve: "", compress: "" },
+      skills: { content: "" },
+      contentPrompt: "",
+      contentFallbackPrompt: "",
     };
     const DEFAULT_START_INSTRUCTION = "请使用 page-content 技能：先读取需求，输出项目框架与页面蓝图；等我确认蓝图后，再逐页写 content/pages/P01.md、P02.md……\n不要写版式、页面类型/关系、机器编号或视觉建议；只交内容。";
     const DEFAULT_OPTIMIZE_INSTRUCTION = "请只优化这一页，保留其他页面不变。先读取当前文案，再按下面的反馈修改，并把结果写回同一路径。\n不要添加版式、页面类型/关系、机器编号或视觉建议。";
@@ -42,28 +44,14 @@ window.__ModuleLoader__.load({
       image: "生成前按 imagegen 规则向我确认提示词、尺寸和参考图。",
       pptx: "输出单页原生可编辑 PPTX；如果只能整份输出，写到 renders/pptx/deck.pptx。",
     };
-    const DEFAULT_CONTENT_PROMPT = "页数按需求与蓝图确定，默认控制在 12–18 页；先输出项目框架和页面蓝图，确认后再逐页写；优先使用表格、分点和矩阵等可扫读结构；不虚构客户事实、数据、政策或案例。";
-    const DEFAULT_SKILLS = {
-      content: "page-content",
-      pptx: "ppt-layout",
-      html: "html-layout",
-      image: "image-layout",
-    };
-    const DEFAULT_CONTENT_INSTRUCTION = [
-      "请直接读取需求，输出项目框架与页面蓝图；等我确认蓝图后，再逐页写 content/pages/P01.md、P02.md……",
-      "每页在标题下写一小段提纲挈领的总领段（约 60–120 字），概括本页核心内容；从页面内容本身提炼，不虚构事实、数据或结论，不要写成空泛套话。",
-      "不要写版式、页面类型/关系、机器编号或视觉建议；只交内容。",
-      "不要虚构客户事实；缺少信息先问。",
-      "本次不调用内容技能；请独立完成，不要因为缺少技能停下。",
-    ];
     const DEFAULT_SETTINGS = {
       projectsRoot: "",
       referencesRoot: "",
       contentMode: "skill",
-      skills: { ...DEFAULT_SKILLS },
-      contentPrompt: DEFAULT_CONTENT_PROMPT,
-      contentFallbackPrompt: DEFAULT_CONTENT_INSTRUCTION.join("\n"),
-      renderPrompts: { ...DEFAULT_RENDER_PROMPTS },
+      skills: {},
+      contentPrompt: "",
+      contentFallbackPrompt: "",
+      renderPrompts: {},
     };
     const MONO = "ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace";
 
@@ -161,6 +149,20 @@ window.__ModuleLoader__.load({
 
     function previewPptxUrl(projectId, pageId, format = "image") {
       return endpoint(`api/projects/${encodeURIComponent(projectId)}/pages/${encodeURIComponent(pageId)}/preview?target=pptx&format=${encodeURIComponent(format)}`);
+    }
+
+    // The DSH shell denies window.open/target=_blank on both prefixes, so artifacts are
+    // saved by a same-document download instead of a new tab.
+    function saveFile(url, filename) {
+      if (typeof document === "undefined") return;
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename || "";
+      link.rel = "noreferrer";
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
     }
 
     async function copy(text) {
@@ -442,7 +444,7 @@ window.__ModuleLoader__.load({
       };
       const item = map[target];
       const targetNote = item.note;
-      const presets = { ...DEFAULT_RENDER_PROMPTS, ...(settings?.renderPrompts || {}) };
+      const presets = { ...SERVER_DEFAULTS.renderPrompts, ...(settings?.renderPrompts || {}) };
       const requirement = policy === "custom" && note.trim() ? note.trim() : (presets[policy] || presets.default);
       return [
         `项目目录：${project.path}`,
@@ -459,7 +461,7 @@ window.__ModuleLoader__.load({
       const mode = settings?.contentMode === "builtin" ? "builtin" : "skill";
       const contentSkill = String(settings?.skills?.content || "").trim();
       const useSkill = mode === "skill" && !!contentSkill;
-      const fallbackText = String(settings?.contentFallbackPrompt || "").trim() || DEFAULT_CONTENT_INSTRUCTION.join("\n");
+      const fallbackText = String(settings?.contentFallbackPrompt || "").trim() || SERVER_DEFAULTS.contentFallbackPrompt;
       const startLines = useSkill
         ? DEFAULT_START_INSTRUCTION.replace(/page-content/g, contentSkill).split(/\r?\n/)
         : fallbackText.split(/\r?\n/);
@@ -512,6 +514,7 @@ window.__ModuleLoader__.load({
       const [newOpen, setNewOpen] = useState(false);
       const [toast, setToast] = useState("");
       const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+      const [defaults, setDefaults] = useState(SERVER_DEFAULTS);
       const [capabilities, setCapabilities] = useState({ reference: null, imagegen: null });
       const [settingsOpen, setSettingsOpen] = useState(false);
       const toastTimer = useRef(null);
@@ -538,6 +541,7 @@ window.__ModuleLoader__.load({
       const loadSettings = async () => {
         try {
           const data = await requestJson("api/settings");
+          if (data.defaults) { SERVER_DEFAULTS = data.defaults; setDefaults(data.defaults); }
           setSettings(data.settings || DEFAULT_SETTINGS);
           setCapabilities({
             reference: data.reference || null,
@@ -550,6 +554,7 @@ window.__ModuleLoader__.load({
 
       const saveSettings = async (next) => {
         const data = await requestJson("api/settings", { method: "POST", body: next });
+        if (data.defaults) { SERVER_DEFAULTS = data.defaults; setDefaults(data.defaults); }
         setSettings(data.settings || DEFAULT_SETTINGS);
         setCapabilities({
           reference: data.reference || null,
@@ -699,6 +704,7 @@ window.__ModuleLoader__.load({
           libraries: capabilities.libraries || [],
           activeId: capabilities.activeId || null,
           imagegen: capabilities.imagegen,
+          defaults,
           onRefresh: loadSettings,
           onClose: () => setSettingsOpen(false),
           onSave: saveSettings,
@@ -707,14 +713,14 @@ window.__ModuleLoader__.load({
       );
     }
 
-    function SettingsModal({ settings, reference, libraries, activeId, imagegen, onRefresh, onClose, onSave }) {
+    function SettingsModal({ settings, reference, libraries, activeId, imagegen, defaults, onRefresh, onClose, onSave }) {
       const [activeTab, setActiveTab] = useState("prompts");
       const [projectsRoot, setProjectsRoot] = useState(settings?.projectsRoot || "");
       const [contentMode, setContentMode] = useState(settings?.contentMode === "builtin" ? "builtin" : "skill");
-      const [skills, setSkills] = useState({ ...DEFAULT_SKILLS, ...(settings?.skills || {}) });
+      const [skills, setSkills] = useState({ ...(settings?.skills || {}) });
       const [contentPrompt, setContentPrompt] = useState(settings?.contentPrompt || "");
-      const [contentFallbackPrompt, setContentFallbackPrompt] = useState(settings?.contentFallbackPrompt || DEFAULT_CONTENT_INSTRUCTION.join("\n"));
-      const [renderPrompts, setRenderPrompts] = useState({ ...DEFAULT_RENDER_PROMPTS, ...(settings?.renderPrompts || {}) });
+      const [contentFallbackPrompt, setContentFallbackPrompt] = useState(settings?.contentFallbackPrompt || defaults.contentFallbackPrompt);
+      const [renderPrompts, setRenderPrompts] = useState({ ...defaults.renderPrompts, ...(settings?.renderPrompts || {}) });
       const [renderTarget, setRenderTarget] = useState("pptx");
       const [renderPolicy, setRenderPolicy] = useState("default");
       const [referenceLive, setReferenceLive] = useState(reference);
@@ -737,10 +743,10 @@ window.__ModuleLoader__.load({
       const initialSnapshot = useMemo(() => JSON.stringify({
         projectsRoot: settings?.projectsRoot || "",
         contentMode: settings?.contentMode === "builtin" ? "builtin" : "skill",
-        skills: { ...DEFAULT_SKILLS, ...(settings?.skills || {}) },
+        skills: { ...(settings?.skills || {}) },
         contentPrompt: settings?.contentPrompt || "",
-        contentFallbackPrompt: settings?.contentFallbackPrompt || DEFAULT_CONTENT_INSTRUCTION.join("\n"),
-        renderPrompts: { ...DEFAULT_RENDER_PROMPTS, ...(settings?.renderPrompts || {}) },
+        contentFallbackPrompt: settings?.contentFallbackPrompt || defaults.contentFallbackPrompt,
+        renderPrompts: { ...defaults.renderPrompts, ...(settings?.renderPrompts || {}) },
       }), [settings]);
       const currentSnapshot = JSON.stringify({
         projectsRoot, contentMode, skills, contentPrompt, contentFallbackPrompt, renderPrompts,
@@ -968,9 +974,9 @@ window.__ModuleLoader__.load({
       };
       const resetPrompts = () => {
         if (!window.confirm("把内容要求、内置内容提示词和页面取舍规则恢复到默认值？")) return;
-        setContentPrompt(DEFAULT_CONTENT_PROMPT);
-        setContentFallbackPrompt(DEFAULT_CONTENT_INSTRUCTION.join("\n"));
-        setRenderPrompts({ ...DEFAULT_RENDER_PROMPTS });
+        setContentPrompt(defaults.contentPrompt);
+        setContentFallbackPrompt(defaults.contentFallbackPrompt);
+        setRenderPrompts({ ...defaults.renderPrompts });
       };
       const save = async () => {
         setBusy(true);
@@ -1168,12 +1174,12 @@ window.__ModuleLoader__.load({
             !useSkillPrompt ? h("div", { style: { marginTop: 10 } },
               h("div", { style: { ...S.row, justifyContent: "space-between", marginBottom: 6 } },
                 h("div", { style: S.label }, contentMode === "skill" ? "内置提示词（当前实际发送）" : "内置提示词"),
-                h(Button, { variant: "ghost", onClick: () => setContentFallbackPrompt(DEFAULT_CONTENT_INSTRUCTION.join("\n")) }, "恢复默认")
+                h(Button, { variant: "ghost", onClick: () => setContentFallbackPrompt(defaults.contentFallbackPrompt) }, "恢复默认")
               ),
               h("textarea", {
                 style: { ...promptInput, minHeight: 120, background: "var(--dsw-alias-bg-base, rgba(128,128,128,.04))" },
                 value: contentFallbackPrompt,
-                placeholder: DEFAULT_CONTENT_INSTRUCTION.join("\n"),
+                placeholder: defaults.contentFallbackPrompt,
                 onChange: (event) => setContentFallbackPrompt(event.target.value),
               }),
               contentMode === "skill" && !contentSkillName ? h("div", { style: { ...promptFixedLine, marginTop: 6, color: "#d9534f" } },
@@ -1186,7 +1192,7 @@ window.__ModuleLoader__.load({
                   h("div", { style: S.label }, "内容要求："),
                   h("span", { style: { ...TYPE.meta, color: FAINT } }, "两类共用")
                 ),
-                h(Button, { variant: "ghost", onClick: () => setContentPrompt(DEFAULT_CONTENT_PROMPT) }, "恢复默认")
+                h(Button, { variant: "ghost", onClick: () => setContentPrompt(defaults.contentPrompt) }, "恢复默认")
               ),
               h("textarea", {
                 style: { ...promptInput, minHeight: 75, background: "var(--dsw-alias-bg-base, rgba(128,128,128,.04))" },
@@ -1238,11 +1244,11 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
           ),
           h("div", { style: { ...S.row, justifyContent: "space-between", marginTop: 10, marginBottom: 4 } },
             h("div", { style: S.label }, "版式取舍规则（可编辑）"),
-            h(Button, { variant: "ghost", onClick: () => updatePrompt(renderPolicy, DEFAULT_RENDER_PROMPTS[renderPolicy]) }, "恢复默认")
+            h(Button, { variant: "ghost", onClick: () => updatePrompt(renderPolicy, defaults.renderPrompts[renderPolicy] || "") }, "恢复默认")
           ),
           h("textarea", {
             style: { ...promptInput, minHeight: 70 },
-            value: renderPrompts[renderPolicy] || DEFAULT_RENDER_PROMPTS[renderPolicy],
+            value: renderPrompts[renderPolicy] || defaults.renderPrompts[renderPolicy] || "",
             onChange: (event) => updatePrompt(renderPolicy, event.target.value),
           }),
           h("div", { style: { display: "flex", alignItems: "flex-start", gap: 8, marginTop: 10 } },
@@ -1828,7 +1834,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
                 TARGET_ORDER.map((key) => h("span", { key, title: `${key}: ${statusText(item.renders?.[key]?.status)}` }, statusDot(item.renders?.[key]?.status)))
               )
             )),
-            (project.pages || []).length === 0 ? h(Empty, { text: `还没有页面。打开内容对话，让 ${settings?.skills?.content || DEFAULT_SKILLS.content} 先产出蓝图和逐页文案。` }) : null
+            (project.pages || []).length === 0 ? h(Empty, { text: `还没有页面。打开内容对话，让 ${settings?.skills?.content || SERVER_DEFAULTS.skills.content || "内容技能"} 先产出蓝图和逐页文案。` }) : null
           ),
           h("div", { style: S.resizer, role: "separator", "aria-orientation": "vertical", title: "拖动调整页面列宽", onPointerDown: (event) => startResize("left", event) }),
           h("div", { style: { ...S.pane, borderRight: `1px solid ${BORDER}`, display: "flex", flexDirection: "column", gap: 10 } },
@@ -1900,7 +1906,11 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
       if (!render || render.status === "missing") {
         return h("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 10, paddingTop: 40 } },
           h(Empty, { text: `这一页还没有 ${tab.toUpperCase()} 产物。` }),
-          h(Button, { variant: "primary", onClick: () => onGenerate(tab) }, `生成 ${TARGET_LABELS[tab]}`)
+          h(Button, { variant: "primary", onClick: () => onGenerate(tab) }, `生成 ${TARGET_LABELS[tab]}`),
+          tab === "pptx" ? h("div", { style: S.row },
+            h(Button, { variant: "primary", disabled: true, title: "生成 PPTX 后才能打开" }, "打开 PDF"),
+            h(Button, { variant: "primary", disabled: true, title: "生成 PPTX 后才能打开" }, "打开 PPTX")
+          ) : null
         );
       }
       if (tab === "html") {
@@ -1934,11 +1944,70 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
       return h(PptxPreview, { key: `${page.id}-${render.mtimeMs}`, project, page, render, onGenerate });
     }
 
+    function PdfViewer({ url, title, filename, onOpenSystem, onClose }) {
+      const [loaded, setLoaded] = useState(false);
+      const [timedOut, setTimedOut] = useState(false);
+      useEffect(() => {
+        const timer = setTimeout(() => setTimedOut(true), 15000);
+        return () => clearTimeout(timer);
+      }, []);
+      useEffect(() => {
+        const onKey = (event) => { if (event.key === "Escape") onClose(); };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+      }, [onClose]);
+      const pending = !loaded && !timedOut;
+      return h("div", { style: S.overlay, onMouseDown: (event) => { if (event.target === event.currentTarget) onClose(); } },
+        h("div", { style: { ...S.modalWide, width: "min(1180px, 96vw)", height: "88vh" } },
+          h("div", { style: { ...S.row, flexWrap: "nowrap", justifyContent: "space-between", gap: 12, padding: "12px 14px", borderBottom: `1px solid ${BORDER}`, flex: "0 0 auto" } },
+            h("div", { style: { ...TYPE.section, color: TEXT, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, title),
+            h("div", { style: { ...S.row, flexWrap: "nowrap", flex: "0 0 auto" } },
+              onOpenSystem ? h(Button, { variant: "ghost", onClick: onOpenSystem }, "用系统打开") : null,
+              h(Button, { variant: "ghost", onClick: () => saveFile(url, filename) }, "下载 PDF"),
+              h(Button, { onClick: onClose }, "关闭")
+            )
+          ),
+          h("div", { style: { position: "relative", flex: "1 1 auto", minHeight: 0, background: "rgba(128,128,128,.13)" } },
+            h("iframe", {
+              src: url,
+              title,
+              onLoad: () => setLoaded(true),
+              style: { width: "100%", height: "100%", border: 0, display: "block" },
+            }),
+            pending ? h("div", { style: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: 24, textAlign: "center", color: MUTED, ...TYPE.body, pointerEvents: "none" } },
+              "正在生成并载入 PDF…首次转换通常需要 5–10 秒。") : null,
+            !pending && !loaded ? h("div", { style: { position: "absolute", left: 0, right: 0, bottom: 0, padding: "8px 12px", textAlign: "center", color: MUTED, ...TYPE.caption, background: SURFACE, borderTop: `1px solid ${BORDER}` } },
+              "内置预览没有载入，可以点「用系统打开」或「下载 PDF」。") : null
+          )
+        )
+      );
+    }
+
     function PptxPreview({ project, page, render, onGenerate }) {
       const [loaded, setLoaded] = useState(false);
       const [failed, setFailed] = useState(false);
+      const [pdfOpen, setPdfOpen] = useState(false);
       const imageUrl = `${previewPptxUrl(project.id, page.id, "image")}&v=${encodeURIComponent(render.mtimeMs || 0)}`;
-      const pdfUrl = previewPptxUrl(project.id, page.id, "pdf");
+      const pdfUrl = `${previewPptxUrl(project.id, page.id, "pdf")}&v=${encodeURIComponent(render.mtimeMs || 0)}`;
+      const pptxFilename = String(render.path || "").split("/").filter(Boolean).pop() || "deck.pptx";
+      const [hint, setHint] = useState("");
+      const [ready, setReady] = useState(false);
+      const hintTimer = useRef(0);
+      useEffect(() => () => clearTimeout(hintTimer.current), []);
+      function flash(text) {
+        setHint(text);
+        clearTimeout(hintTimer.current);
+        hintTimer.current = setTimeout(() => setHint(""), 5000);
+      }
+      async function openArtifact(target, label) {
+        try {
+          const path = `api/projects/${encodeURIComponent(project.id)}/pages/${encodeURIComponent(page.id)}/open?target=${target}`;
+          await requestJson(path, { method: "POST" });
+          flash(label);
+        } catch (error) {
+          flash(`打开失败：${error?.message || error}`);
+        }
+      }
       return h("div", { style: { height: "100%", minHeight: 300, display: "flex", flexDirection: "column", gap: 8 } },
         h("div", { style: { ...S.row, justifyContent: "space-between", gap: 8 } },
           h("div", { style: { ...S.muted, fontSize: 11, minWidth: 0 } },
@@ -1946,27 +2015,35 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
           ),
           h("div", { style: { ...S.row, flexWrap: "wrap" } },
             h(Button, { variant: "ghost", onClick: () => onGenerate("pptx") }, "重新生成"),
-            h("a", { href: pdfUrl, target: "_blank", rel: "noreferrer", style: { color: ACCENT, fontSize: 11 } }, "打开 PDF"),
-            h("a", { href: fileUrl(project.id, render.path), target: "_blank", rel: "noreferrer", style: { color: ACCENT, fontSize: 11 } }, "下载 PPTX")
+            h(Button, { variant: "primary", disabled: !ready, title: ready ? "" : "页面预览还没生成好", onClick: () => setPdfOpen(true) }, "打开 PDF"),
+            h(Button, { variant: "primary", disabled: !ready, title: ready ? "" : "页面预览还没生成好", onClick: () => openArtifact("pptx", `已在系统程序中打开 ${pptxFilename}`) }, "打开 PPTX")
           )
         ),
+        hint ? h("div", { style: { ...S.muted, fontSize: 10.5 } }, hint) : null,
         !loaded && !failed ? h("div", { style: { ...S.muted, fontSize: 12 } }, "正在生成页面预览…") : null,
         failed
           ? h("div", { style: { color: "#d9534f", fontSize: 12, lineHeight: 1.7 } },
-              "PPT 预览生成失败。可以打开 PDF 或下载 PPTX 查看。")
+              "PPT 预览生成失败，可以直接用「打开 PDF」或「打开 PPTX」查看。")
           : h("div", { style: { flex: "1 1 auto", minHeight: 300, padding: 10, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(128,128,128,.13)", border: `1px solid ${SOFT_BORDER}`, borderRadius: 10, overflow: "hidden" } },
               h("img", {
                 key: `${page.id}-${render.mtimeMs}`,
                 src: imageUrl,
                 alt: `${page.id} ${page.title}`,
-                onLoad: () => setLoaded(true),
-                onError: () => { setLoaded(true); setFailed(true); },
+                onLoad: () => { setLoaded(true); setReady(true); },
+                onError: () => { setLoaded(true); setFailed(true); setReady(true); },
                 style: { maxWidth: "100%", maxHeight: "100%", width: "auto", height: "auto", objectFit: "contain", display: "block", borderRadius: 4, background: "#fff", boxShadow: "0 1px 8px rgba(0,0,0,.16)" },
               })
             ),
         h("div", { style: { ...S.muted, fontSize: 10.5, lineHeight: 1.6 } },
           "LibreOffice 渲染预览，最终效果以 PowerPoint 为准。"
-        )
+        ),
+        pdfOpen ? h(PdfViewer, {
+          url: pdfUrl,
+          title: `${page.id} ${page.title} · PDF`,
+          filename: `${page.id}.pdf`,
+          onOpenSystem: () => openArtifact("pdf", "已在系统阅读器中打开 PDF"),
+          onClose: () => setPdfOpen(false),
+        }) : null
       );
     }
 
@@ -1996,7 +2073,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
       return h("div", { style: S.overlay, onMouseDown: (event) => { if (event.target === event.currentTarget) onClose(); } },
         h("div", { style: S.modal },
           h("div", { style: { ...S.row, justifyContent: "space-between", marginBottom: 12 } }, h("div", { style: S.h1 }, "优化此页"), h(Button, { variant: "ghost", onClick: onClose }, "关闭")),
-          h("div", { style: S.muted, marginBottom: 10 }, `反馈会发送到项目内容对话，由 ${settings?.skills?.content || DEFAULT_SKILLS.content} 只改这一页。`),
+          h("div", { style: S.muted, marginBottom: 10 }, `反馈会发送到项目内容对话，由 ${settings?.skills?.content || SERVER_DEFAULTS.skills.content || "内容技能"} 只改这一页。`),
           h("textarea", { style: { ...S.input, minHeight: 160, resize: "vertical" }, value: feedback, onChange: (event) => setFeedback(event.target.value), placeholder: "例如：第二段太泛，补一个可验证的成果指标；标题更有判断力……" }),
           h("div", { style: { ...S.row, justifyContent: "flex-end", marginTop: 12 } },
             h(Button, { variant: "ghost", onClick: onClose, disabled: busy }, "取消"),

@@ -13,6 +13,7 @@ audit —— 一条命令跑完出页复核链
     6. 渲染       pptx -> pdf（LibreOffice 无头）-> png（150dpi）
     7. 分区裁切   整页切 4 张放大图，供逐区目视
     8. 构件语汇   产出页的形状比例是否落在参考稿语汇内（窄色条越界即报）
+    9. 主色同族   成品是否混入 kit 内置默认色（换参考稿后仍出红 = 提前取色）
 
 用法约定：
     · forbidden 词表由调用方按本次内容依据传入，工具不内置任何项目词表。
@@ -27,10 +28,57 @@ from pptx_kit import (render_pdf, render_png, crop_regions, audit_text, pack_siz
                      type_scale_audit, print_type_scale,
                      lead_clearance_audit, print_lead_clearance,
                      text_overflow_audit, print_text_overflow,
-                     probe_part_vocab, vocab_check)
+                     probe_part_vocab, vocab_check, probe_theme)
 from reference_root import resolve as resolve_reference
 
 DEFAULT_FORBID = []      # 不内置；由调用方按本次内容依据传入
+
+# kit 内置参考稿（内置红库）的默认色。换参考稿后成品里若还出现这些色，
+# 就是「脚本在打开参考稿之前取了色」的指纹：颜色被固化成默认值，
+# 于是参考库明明是蓝的，页面却是红的（或红蓝混排，比全红更难发现）。
+KIT_DEFAULT_COLORS = {
+    'AD0101': '内置 accent1 深红',
+    'C00000': '内置实心卡红',
+    'FCF4F4': '内置浅红底',
+}
+
+
+def scan_colors(prs):
+    """按真实页序统计成品每个 srgbClr 色值的次数与出现页。"""
+    hits = {}
+    for i, s in enumerate(prs.slides):
+        try:
+            xml = s.part.blob.decode('utf-8', 'replace')
+        except Exception:
+            continue
+        for c in re.findall(r'srgbClr val="([0-9A-Fa-f]{6})"', xml):
+            d = hits.setdefault(c.upper(), {'n': 0, 'pages': set()})
+            d['n'] += 1
+            d['pages'].add(i + 1)
+    return hits
+
+
+def palette_family_audit(pptx, ref_pptx):
+    """第 9 关：成品主色是否与参考稿同族。
+
+    判据**只收窄到这一个 bug 的指纹**——成品里出现 kit 内置色值，而当前
+    参考稿的调色板里没有它。正常的品牌色覆盖、灰阶、黑白一律不报，
+    否则任何定制配色都会被误伤。参考稿调色板由 probe_theme() 实测。
+    """
+    from pptx import Presentation
+    hits = scan_colors(Presentation(pptx))
+    ref_pal = probe_theme(Presentation(ref_pptx))
+    ref_colors = set()
+    for v in ref_pal.values():
+        if isinstance(v, str) and re.match(r'^[0-9A-Fa-f]{6}$', v):
+            ref_colors.add(v.upper())
+    offenders = []
+    for c, info in sorted(hits.items()):
+        if c in KIT_DEFAULT_COLORS and c not in ref_colors:
+            offenders.append({'color': c, 'name': KIT_DEFAULT_COLORS[c],
+                              'n': info['n'], 'pages': sorted(info['pages'])})
+    return {'colors': len(hits), 'ref_colors': sorted(ref_colors),
+            'offenders': offenders}
 
 
 def main():
@@ -52,7 +100,7 @@ def main():
     os.makedirs(outdir, exist_ok=True)
     forbid = [w.strip() for w in args.forbid.split(',') if w.strip()] or DEFAULT_FORBID
 
-    print('>>> [1/8] 包完整性')
+    print('>>> [1/9] 包完整性')
     entries, kb = pack_size(pptx)
     z = zipfile.ZipFile(pptx)
     zok = z.testzip() is None
@@ -78,7 +126,7 @@ def main():
     if not zok:
         bad.append('zip 损坏')
 
-    print('>>> [2/8] 文本层审计')
+    print('>>> [2/9] 文本层审计')
     for n, pn in targets:
         a = audit_text(pptx, forbid, slide_part=pn)
         print('    第%d页 残留词=%s | ASCII直引号=%s | U+FFFD=%d | 文本节点=%d | 字符=%d'
@@ -91,32 +139,32 @@ def main():
         if a['ufffd']:
             bad.append('第%d页 U+FFFD %d' % (n, a['ufffd']))
 
-    print('>>> [3/8] 字号层级一致性（跨页比较）')
+    print('>>> [3/9] 字号层级一致性（跨页比较）')
     scale = type_scale_audit(pptx)
     print_type_scale(scale)
     if scale.get('issues'):
         bad.append('字号层级不一致: 第%s页偏小'
                    % '、'.join(str(i['page']) for i in scale['issues']))
 
-    print('>>> [4/8] 导语净空（压线/重叠/纵向溢出）')
+    print('>>> [4/9] 导语净空（压线/重叠/纵向溢出）')
     lead = lead_clearance_audit(pptx)
     print_lead_clearance(lead)
     for it in lead.get('issues', []):
         bad.append('第%d页导语%s' % (it['page'], it['kind']))
 
-    print('>>> [5/8] 文本框纵向溢出')
+    print('>>> [5/9] 文本框纵向溢出')
     ovf = text_overflow_audit(pptx)
     print_text_overflow(ovf)
     for it in ovf.get('issues', []):
         bad.append('第%d页文本框溢出(%.2f">%.2f")' % (it['page'], it['need_h'], it['box_h']))
 
-    print('>>> [6/8] 渲染')
+    print('>>> [6/9] 渲染')
     pdf = render_pdf(pptx, outdir)
     png = os.path.join(outdir, 'audit.png')
     _, pages = render_png(pdf, png, dpi=args.dpi, page=targets[0][0] - 1)
     print('    %s (%d 页)' % (os.path.basename(png), pages))
 
-    print('>>> [7/8] 分区裁切')
+    print('>>> [7/9] 分区裁切')
     for n, pn in targets:
         if len(targets) > 1:
             page_png = os.path.join(outdir, 'audit_p%d.png' % n)
@@ -130,7 +178,7 @@ def main():
         else:
             for f in crop_regions(png, outdir, dpi=args.dpi):
                 print('   ', f)
-    print('>>> [8/8] 构件语汇一致性（形状比例是否落在参考稿语汇内）')
+    print('>>> [8/9] 构件语汇一致性（形状比例是否落在参考稿语汇内）')
     # 参考稿解析：**三段优先级**，并全程记录来源（第 8 关的判据完全依赖
     # 这份稿，用错稿 = 用错判据，所以必须可追溯）。
     ref = os.path.abspath(args.reference) if args.reference else ''
@@ -201,10 +249,39 @@ def main():
         print('       后果：检测不出「参考稿里没有的构件」（如卡片旁的小竖条）。')
         print('       请用 --reference <参考稿.pptx> 指定本次出页所依据的参考稿。')
 
-    if not bad and vocab_skipped:
-        print('\n结论: 全部通过（**构件语汇关卡未执行** —— 未提供参考稿）')
+    print('>>> [9/9] 主色同族校验（成品是否混入 kit 内置默认色）')
+    palette_skipped = False
+    if os.path.exists(ref):
+        fam = palette_family_audit(pptx, ref)
+        print('    成品用色 %d 种 | 参考稿调色板 %s'
+              % (fam['colors'], '/'.join(fam['ref_colors']) or '（未取到）'))
+        for o in fam['offenders']:
+            print('    !! 命中内置默认色 %s（%s）×%d，页 %s —— 参考稿没有这个颜色'
+                  % (o['color'], o['name'], o['n'],
+                     '、'.join('第%d页' % p for p in o['pages'])))
+            bad.append('混入内置默认色 %s' % o['color'])
+        if fam['offenders']:
+            print('       判断：疑似在 open_reference() 之前取了色 —— '
+                  '颜色被固化成 kit 默认红，而造型原语跟着参考稿走，'
+                  '于是出现红蓝混色。把 `pal()` 移到打开参考稿之后再取。')
+        else:
+            print('    主色同族 ✓')
     else:
-        print('\n结论: %s' % ('全部通过' if not bad else '需处理 -> ' + '；'.join(bad)))
+        palette_skipped = True
+        print('    !! 未找到参考稿 —— 主色同族校验**未执行**')
+        print('       请用 --reference <参考稿.pptx> 指定本次出页所依据的参考稿。')
+
+    skipped = []
+    if vocab_skipped:
+        skipped.append('构件语汇')
+    if palette_skipped:
+        skipped.append('主色同族')
+    tail = ('（**%s关卡未执行** —— 未提供参考稿）' % '、'.join(skipped)
+            if skipped else '')
+    if not bad:
+        print('\n结论: 全部通过%s' % tail)
+    else:
+        print('\n结论: 需处理 -> %s%s' % ('；'.join(bad), tail))
     return 0 if not bad else 1
 
 

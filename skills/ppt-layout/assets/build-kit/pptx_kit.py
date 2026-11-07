@@ -354,7 +354,7 @@ def add_connector(slide, x1, y1, x2, y2, color=None, width_pt=0.75,
                                      E(x1), E(y1), E(x2), E(y2))
     try:
         cn.line.color.rgb = RGBColor.from_string(
-            (color or pal('line') or 'D9D9D9'))
+            (color or _pal_or_default('line') or 'D9D9D9'))
     except Exception:
         pass
     try:
@@ -957,8 +957,19 @@ def probe_theme(prs):
 
 # 模块级当前调色板：open_reference/open_deck 时从参考稿自动装载。
 # 造型原语的默认色从这里取，因此换参考稿会自动跟随其风格。
-PALETTE = dict(accent=RED, accent2=RED2, tint=TINT, line=LINEGRY,
-               text=BLACK, font=EA, font_bold=EA)
+#
+# ⚠️ 必须**空 dict 起步**。历史实现预填了内置红库那套色，于是
+#   「还没打开参考稿就取色」会静默拿到红色：换到蓝色参考库后，脚本顶部
+#   `NAVY = pal('accent')` 拿到红，造型原语（运行时读本 dict）拿到蓝，
+#   同一页红蓝混排。事故复盘见 references/quickstart.md「取色顺序」。
+#   保留 dict 对象本身：`from pptx_kit import *` 复制的是引用，
+#   load_palette 必须 clear+update 原地更新，不能重新绑定。
+PALETTE = {}
+
+# 兜底调色板：只在「参考稿确实没探测到该项」时由 _pal_or_default 使用，
+# 不参与正常出页（正常出页每一项都来自 PALETTE）。
+_DEFAULTS = dict(accent=RED, accent2=RED2, tint=TINT, line=LINEGRY,
+                 text=BLACK, font=EA, font_bold=EA)
 
 # 模块级项目符号规格（字符/字体/大小/颜色），同样从参考稿探测。
 # 换一份参考稿，符号形状会跟着变（例如参考稿用 Wingdings 方块，就用方块）。
@@ -1033,8 +1044,36 @@ def load_palette(prs):
 
 
 def pal(key):
-    """取当前调色板某项（accent / accent2 / tint / line / text / font）。"""
-    return PALETTE.get(key)
+    """取当前调色板某项（accent / accent2 / tint / line / text / font）。
+
+    **必须在 open_reference() / open_deck() 之后调用。** 调色板是运行时从
+    参考稿装载的，装载前取色拿到的是别人的颜色，所以这里直接报错而不是猜。
+
+    错误写法（颜色会被固化成「默认红」，换参考库后仍是红）：
+        NAVY = pal('accent')                # ← 文件顶部，参考稿还没打开
+        prs, slide = open_reference(REF)
+
+    正确写法：
+        prs, slide = open_reference(REF)
+        NAVY = pal('accent')                # ← 打开之后再取
+    """
+    if key in PALETTE:
+        return PALETTE[key]
+    if not PALETTE:
+        raise RuntimeError(
+            "调色板还没从参考稿装载：open_reference()/open_deck() 之前不能取色。"
+            "pal(%r) 被提前调用了 —— 把 `X = pal(%r)` 移到打开参考稿之后。"
+            % (key, key))
+    return _DEFAULTS.get(key)
+
+
+def _pal_or_default(key):
+    """容忍型取色：给 kit 内部的兜底路径用（未装载/缺键时回落内置值）。
+
+    面向用户的造型原语**不要**用它 —— 那会把「忘了先打开参考稿」重新变回
+    静默拿默认色，正是 pal() 要拦的 bug。
+    """
+    return PALETTE.get(key) or _DEFAULTS.get(key)
 
 
 def _tint_of(hexcolor, ratio):
@@ -1047,7 +1086,7 @@ def _tint_of(hexcolor, ratio):
     try:
         r = int(hexcolor[0:2], 16); g = int(hexcolor[2:4], 16); b = int(hexcolor[4:6], 16)
     except Exception:
-        return TINT
+        return _pal_or_default('tint')
     r = int(round(255 - (255 - r) * ratio))
     g = int(round(255 - (255 - g) * ratio))
     b = int(round(255 - (255 - b) * ratio))
@@ -1736,7 +1775,7 @@ def setup_title(slide, lead, sub=None, lead_size=None, sub_size=None):
         sub_size = spec['size_sub'] or spec['size_lead']
     tcol = spec['color_lead']
     scol = spec['color_sub']
-    tfont = spec['font'] or pal('font') or EA
+    tfont = spec['font'] or _pal_or_default('font') or EA
 
     # 继承来的字号必须验证**放不放得下**。
     # 参考页标题框的高度是给它自己那行**短标题**的；本页标题更长时，

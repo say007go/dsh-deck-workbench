@@ -126,6 +126,22 @@ setup_lead(lead, '«导语»')
 save_and_report(prs, OUT)
 ```
 
+**取色顺序是硬规则**：`pal()` 只能在 `open_reference()` / `open_deck()` **之后**
+调用——调色板是运行时从参考稿装载的，打开之前取色拿到的是内置参考稿的颜色，
+换一份不同色系的参考库就会出「同页红蓝混排」。现在提前取色直接抛
+`RuntimeError`，报错信息里写明该把哪一行挪到后面。
+
+```python
+NAVY = pal('accent')                    # ✗ 参考稿还没打开
+prs, slide = open_reference(REF, keep=2)
+
+prs, slide = open_reference(REF, keep=2)
+NAVY = pal('accent')                    # ✓ 打开之后再取
+```
+
+`RED` / `RED2` / `TINT` 这些常量是**内置参考稿**的实测值；要跟随当前参考稿，
+颜色一律走 `pal()`。
+
 **整套方案（多页）**——交付形态是「一份 N 页 pptx」，不是 N 个单页文件：
 
 ```python
@@ -193,9 +209,10 @@ python audit.py --pptx <成品.pptx> --forbid 词1,词2        # 单页
 python audit.py --all --pptx <多页方案.pptx> --forbid …     # 整份 deck 逐页
 ```
 
-依次完成八道关：包完整性 → 文本层审计（残留词／ASCII 直引号／U+FFFD）→ **字号层级
+依次完成九道关：包完整性 → 文本层审计（残留词／ASCII 直引号／U+FFFD）→ **字号层级
 跨页一致性** → **导语净空**（压线／重叠／纵向溢出）→ **文本框纵向溢出** →
-渲染 PDF 与 150dpi PNG → 切成 4 张分区放大图 → **构件语汇一致性**。`--all` 会逐页做文本审计、渲染 `audit_pN.png` 并把分区图放进
+渲染 PDF 与 150dpi PNG → 切成 4 张分区放大图 → **构件语汇一致性** → **主色同族校验**
+（成品里是否混入 kit 内置默认红 AD0101／C00000／FCF4F4，即「提前取色」的指纹）。`--all` 会逐页做文本审计、渲染 `audit_pN.png` 并把分区图放进
 `pN/` 子目录。**分区图必须逐张看过**——静态检查全绿不代表视觉正确，孤字行、压线、
 错位只有肉眼能发现。
 

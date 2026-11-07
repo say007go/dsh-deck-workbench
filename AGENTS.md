@@ -5,8 +5,8 @@ This repository is a DSH host plugin with a hand-written browser client and thre
 ## Read order
 
 1. `README.md` — public overview, install, settings, usage, directory layout.
-2. If `dev-docs/HANDOFF.md` exists locally, read it before editing. `dev-docs/` is development material: it is excluded by `.gitignore` and `.npmignore`, and is not part of the public package. If it is absent (public clone), rely on the README and source and ask the maintainer for missing decisions.
-3. For design details, read `dev-docs/SPEC.md`; for equivalence and release checks, read `dev-docs/AUDIT.md`.
+2. If `dev-docs/HANDOFF.md` exists locally, read it before editing. `dev-docs/` is version-controlled development material, excluded from the published package by `.npmignore` and `package.json` `files`. If it is absent, rely on the README and source and ask the maintainer for missing decisions.
+3. For design details, read `dev-docs/SPEC.md`; for UI rules, `dev-docs/DESIGN.md`; for equivalence and release checks, `dev-docs/AUDIT.md`.
 
 ## Hard boundaries
 
@@ -26,4 +26,4 @@ python skills/html-layout/scripts/validate_library.py --reference <reference-roo
 npm pack --dry-run --json
 ```
 
-The project-level test harnesses are local development artifacts and are not shipped in this repository.
+The project-level test harness lives in `test/` and runs with `npm test` (node --test). It is version-controlled but excluded from the published package by `package.json` `files` and `.npmignore`.
