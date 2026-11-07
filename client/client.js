@@ -2274,6 +2274,11 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
       });
     }
 
+    // 纯函数通过这里暴露给 node --test 直接测；宿主只读 apply / inject。
+    exports.__internals = {
+      endpoint, fileUrl, formatTime, statusText, statusColor,
+      diffLines, buildOptimizePrompt, buildRenderPrompt, buildStartPrompt, contentRequirement,
+    };
     exports.apply = apply;
     exports.inject = ["slots"];
     return exports;

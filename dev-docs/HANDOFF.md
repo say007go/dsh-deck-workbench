@@ -3,7 +3,7 @@
 > **新 agent / 新对话先读这里。** 本目录随仓库版本控制，只排除在 npm 包外。阅读顺序：本文件 → [SPEC.md](SPEC.md) → [DESIGN.md](DESIGN.md) → [AUDIT.md](AUDIT.md) → [README.md](../README.md)，并遵守 [AGENTS.md](../AGENTS.md) 的编辑边界。
 
 - 快照日期：2026-11-07
-- 当前版本：**0.1.55**
+- 当前版本：**0.1.56**
 - 插件目录：`<插件根>`
 - 设计规格：[SPEC.md](SPEC.md)
 - 使用说明：[README.md](../README.md)
@@ -236,6 +236,14 @@ DELETE /deck-workbench/api/reference/libraries/:id
 - 测试 11 → 16 例：新增批准状态机（`test/approval.test.js`）与 HTML 响应头（`test/http.test.js`）。
 - `dev-docs/` 重新纳入版本控制，只靠 `.npmignore` 与 `package.json files` 排除在包外。
 
+### 0.1.56（2026-11-07）
+
+客户端纯函数补上单元测试，仍然没有构建步骤。
+
+- `client/client.js` 末尾新增 `exports.__internals`，暴露 `endpoint` / `fileUrl` / `formatTime` / `statusText` / `statusColor` / `diffLines` / 三个 `build*Prompt`，宿主只读 `apply` 与 `inject`。
+- `test/client.test.js` 用 `vm` + 最小 React stub 把客户端当普通脚本加载，14 个用例覆盖：URL 拼接与转义、时间与状态文案、diff 的新增/删除/超长退化、三种产物的提示词路径与技能名、`custom` 策略只认自己的备注、未知策略回落默认、内容技能替换与缺失提示、内置模式与内容要求追加。
+- 测试总数 26 → 40。
+
 ### 0.1.55（2026-11-07）
 
 界面样式收敛成 token，且不引入构建步骤。
@@ -285,7 +293,7 @@ DELETE /deck-workbench/api/reference/libraries/:id
 
 优先顺序：
 
-1. 确认真实 DSH 已加载 0.1.55：设置三个标签、参考库状态/校验、可选内容技能/默认文案、图片按钮、项目列表；
+1. 确认真实 DSH 已加载 0.1.56：设置三个标签、参考库状态/校验、可选内容技能/默认文案、图片按钮、项目列表；
 2. 新建真实项目走“会话 → 蓝图 → 页面 → 生成 PPTX/图片/HTML”全链路，验证共享参考库下的 PPTX/HTML/图片输出；
 3. 验证 `html-layout` / `image-layout` 的独立加载和真实页面出图/HTML，再清理退役备份与技能内参考副本；
 4. 完成参考库构建器的 agent 标注闭环与开源整理；
