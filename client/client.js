@@ -2048,13 +2048,10 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
         overflow: "hidden",
       };
       if (!render || render.status === "missing") {
+        // 还没有产物时只给一个动作：生成。打开类按钮等产物出现后再出现。
         return h("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 10, paddingTop: 40 } },
-          h(Empty, { text: `这一页还没有 ${tab.toUpperCase()} 产物。` }),
-          h(Button, { variant: "primary", onClick: () => onGenerate(tab) }, `生成 ${TARGET_LABELS[tab]}`),
-          tab === "pptx" ? h("div", { style: S.row },
-            h(Button, { variant: "primary", disabled: true, title: "生成 PPTX 后才能打开" }, "打开 PDF"),
-            h(Button, { variant: "primary", disabled: true, title: "生成 PPTX 后才能打开" }, "打开 PPTX")
-          ) : null
+          h(Empty, { text: `这一页还没有 ${TARGET_LABELS[tab]} 产物。` }),
+          h(Button, { variant: "primary", onClick: () => onGenerate(tab) }, `生成 ${TARGET_LABELS[tab]}`)
         );
       }
       if (tab === "html") {

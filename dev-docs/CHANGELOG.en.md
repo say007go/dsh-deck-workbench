@@ -4,6 +4,17 @@
 > primary record and also carries the detailed 0.1.30–0.1.51 history; the appendix below is a summary.
 > The version number lives in `package.json`, the top of `README.md`, and the top of `HANDOFF.md` — bump all three together.
 
+## 0.1.60 — 2026-11-07
+
+The empty state now offers exactly one action: generate.
+
+### Interface
+
+- The preview pane no longer shows two greyed-out “Open PDF / Open PPTX” buttons when the page has no
+  artifact yet — with nothing to open they were just noise. Both buttons appear above the preview once the
+  artifact exists.
+- The empty-state text now uses the artifact name (PPTX / image / HTML) instead of the raw enum (`IMAGE`).
+
 ## 0.1.59 — 2026-11-07
 
 Fixes the buttons that did nothing in the desktop host: native confirm/prompt are disabled in Electron.
