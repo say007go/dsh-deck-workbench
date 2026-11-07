@@ -24,6 +24,15 @@ window.__ModuleLoader__.load({
       }, [intervalMs]);
     };
     const ACCENT = "#AD0101";
+    // 语义色与 DESIGN.md 的角色一一对应；组件里不要再写裸色值。
+    const DANGER = "#d9534f";
+    const SUCCESS = "#2f8f5b";
+    const WARN = "#b26a00";
+    const INFO = "#1565c0";
+    const ON_ACCENT = "#fff";
+    const TOAST_BG = "#222";
+    const CANVAS = "#fff";
+    const GRADIENT = "linear-gradient(145deg, #C83E38 0%, #9F0606 58%, #850000 100%)";
     const BORDER = "var(--dsw-alias-border-l1, rgba(128,128,128,.22))";
     const SOFT_BORDER = "rgba(128,128,128,.20)";
     const MUTED = "var(--dsw-alias-label-secondary, rgba(128,128,128,.78))";
@@ -38,6 +47,9 @@ window.__ModuleLoader__.load({
       prompt: { fontSize: 12.5, lineHeight: 1.8, fontWeight: 400, whiteSpace: "pre-wrap" },
       label: { fontSize: 11, lineHeight: 1.5, fontWeight: 500 },
       caption: { fontSize: 10.5, lineHeight: 1.65, fontWeight: 400 },
+      small: { fontSize: 12, lineHeight: 1.5, fontWeight: 400 },
+      hero: { fontSize: 15, lineHeight: 1.35, fontWeight: 650 },
+      title: { fontSize: 16, lineHeight: 1.4, fontWeight: 650 },
       meta: { fontSize: 9.5, lineHeight: 1.5, fontWeight: 500, letterSpacing: ".08em" },
       control: { fontSize: 11.5, lineHeight: 1.5, fontWeight: 500 },
     };
@@ -83,16 +95,16 @@ window.__ModuleLoader__.load({
     }
 
     const S = {
-      root: { height: "100%", minHeight: 0, display: "flex", flexDirection: "column", color: TEXT, fontSize: 13, fontFamily: "inherit", overflow: "hidden" },
+      root: { height: "100%", minHeight: 0, display: "flex", flexDirection: "column", color: TEXT, fontSize: TYPE.item.fontSize, fontFamily: "inherit", overflow: "hidden" },
       top: { display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", borderBottom: `1px solid ${BORDER}`, flex: "0 0 auto", flexWrap: "wrap" },
       body: { flex: "1 1 auto", minHeight: 0, overflow: "auto", padding: 18 },
-      h1: { margin: 0, fontSize: 18, fontWeight: 650, letterSpacing: "0.01em" },
-      h2: { margin: 0, fontSize: 14, fontWeight: 650 },
-      muted: { color: MUTED, fontSize: 12 },
-      button: { appearance: "none", border: `1px solid ${SOFT_BORDER}`, background: "transparent", color: "inherit", borderRadius: 7, padding: "6px 11px", fontSize: 12, fontFamily: "inherit", cursor: "pointer", lineHeight: 1.35 },
-      primary: { appearance: "none", border: `1px solid ${ACCENT}`, background: ACCENT, color: "#fff", borderRadius: 7, padding: "7px 13px", fontSize: 12, fontFamily: "inherit", cursor: "pointer", fontWeight: 600, lineHeight: 1.35 },
-      ghost: { appearance: "none", border: "1px solid transparent", background: "transparent", color: "inherit", borderRadius: 7, padding: "6px 9px", fontSize: 12, fontFamily: "inherit", cursor: "pointer", lineHeight: 1.35 },
-      input: { width: "100%", boxSizing: "border-box", border: `1px solid ${SOFT_BORDER}`, background: "var(--dsw-alias-bg-base, rgba(128,128,128,.08))", color: TEXT, borderRadius: 7, padding: "8px 10px", fontSize: 13, fontFamily: "inherit", outline: "none" },
+      h1: { margin: 0, fontSize: TYPE.brand.fontSize, fontWeight: 650, letterSpacing: "0.01em" },
+      h2: { margin: 0, fontSize: TYPE.section.fontSize, fontWeight: 650 },
+      muted: { color: MUTED, fontSize: TYPE.small.fontSize },
+      button: { appearance: "none", border: `1px solid ${SOFT_BORDER}`, background: "transparent", color: "inherit", borderRadius: 7, padding: "6px 11px", fontSize: TYPE.small.fontSize, fontFamily: "inherit", cursor: "pointer", lineHeight: 1.35 },
+      primary: { appearance: "none", border: `1px solid ${ACCENT}`, background: ACCENT, color: ON_ACCENT, borderRadius: 7, padding: "7px 13px", fontSize: TYPE.small.fontSize, fontFamily: "inherit", cursor: "pointer", fontWeight: 600, lineHeight: 1.35 },
+      ghost: { appearance: "none", border: "1px solid transparent", background: "transparent", color: "inherit", borderRadius: 7, padding: "6px 9px", fontSize: TYPE.small.fontSize, fontFamily: "inherit", cursor: "pointer", lineHeight: 1.35 },
+      input: { width: "100%", boxSizing: "border-box", border: `1px solid ${SOFT_BORDER}`, background: "var(--dsw-alias-bg-base, rgba(128,128,128,.08))", color: TEXT, borderRadius: 7, padding: "8px 10px", fontSize: TYPE.item.fontSize, fontFamily: "inherit", outline: "none" },
       grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 },
       card: {
         border: `1px solid ${SOFT_BORDER}`,
@@ -112,7 +124,7 @@ window.__ModuleLoader__.load({
         boxShadow: "0 10px 26px rgba(0,0,0,.13)",
         transform: "translateY(-1px)",
       },
-      badge: { display: "inline-flex", alignItems: "center", gap: 5, borderRadius: 999, padding: "2px 7px", fontSize: 11, fontFamily: "inherit", border: `1px solid ${SOFT_BORDER}`, color: MUTED, whiteSpace: "nowrap" },
+      badge: { display: "inline-flex", alignItems: "center", gap: 5, borderRadius: 999, padding: "2px 7px", fontSize: TYPE.label.fontSize, fontFamily: "inherit", border: `1px solid ${SOFT_BORDER}`, color: MUTED, whiteSpace: "nowrap" },
       overlay: { position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 },
       modal: { width: "min(720px, 96vw)", maxHeight: "90vh", overflow: "auto", background: SURFACE, color: TEXT, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 20, boxShadow: "0 24px 64px rgba(0,0,0,.32)" },
       modalWide: { width: "min(1040px, 96vw)", maxHeight: "90vh", overflow: "hidden", background: SURFACE, color: TEXT, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 0, boxShadow: "0 20px 60px rgba(0,0,0,.35)", display: "flex", flexDirection: "column" },
@@ -125,13 +137,13 @@ window.__ModuleLoader__.load({
       pageItem: { width: "100%", textAlign: "left", border: "1px solid transparent", background: "transparent", color: "inherit", borderRadius: 8, padding: "8px 9px", cursor: "pointer", display: "flex", flexDirection: "column", gap: 4 },
       pageItemActive: { width: "100%", textAlign: "left", border: `1px solid ${ACCENT}55`, background: `${ACCENT}12`, color: "inherit", borderRadius: 8, padding: "8px 9px", cursor: "pointer", display: "flex", flexDirection: "column", gap: 4 },
       dot: { width: 7, height: 7, borderRadius: 999, display: "inline-block" },
-      pre: { margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word", fontFamily: "inherit", fontSize: 12.5, lineHeight: 1.75, userSelect: "text" },
+      pre: { margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word", fontFamily: "inherit", fontSize: TYPE.body.fontSize, lineHeight: 1.75, userSelect: "text" },
       tabs: { display: "flex", gap: 4, borderBottom: `1px solid ${BORDER}`, padding: "0 14px", flex: "0 0 auto" },
-      tab: { appearance: "none", border: 0, borderBottom: "2px solid transparent", background: "transparent", color: MUTED, padding: "9px 10px", fontSize: 12, fontFamily: "inherit", cursor: "pointer" },
-      tabActive: { appearance: "none", border: 0, borderBottom: `2px solid ${ACCENT}`, background: "transparent", color: "inherit", padding: "9px 10px", fontSize: 12, fontFamily: "inherit", cursor: "pointer", fontWeight: 600 },
-      toast: { position: "fixed", left: "50%", bottom: 24, transform: "translateX(-50%)", zIndex: 1200, background: "#222", color: "#fff", borderRadius: 8, padding: "9px 14px", fontSize: 12, maxWidth: "80vw", boxShadow: "0 8px 30px rgba(0,0,0,.3)" },
+      tab: { appearance: "none", border: 0, borderBottom: "2px solid transparent", background: "transparent", color: MUTED, padding: "9px 10px", fontSize: TYPE.small.fontSize, fontFamily: "inherit", cursor: "pointer" },
+      tabActive: { appearance: "none", border: 0, borderBottom: `2px solid ${ACCENT}`, background: "transparent", color: "inherit", padding: "9px 10px", fontSize: TYPE.small.fontSize, fontFamily: "inherit", cursor: "pointer", fontWeight: 600 },
+      toast: { position: "fixed", left: "50%", bottom: 24, transform: "translateX(-50%)", zIndex: 1200, background: TOAST_BG, color: ON_ACCENT, borderRadius: 8, padding: "9px 14px", fontSize: TYPE.small.fontSize, maxWidth: "80vw", boxShadow: "0 8px 30px rgba(0,0,0,.3)" },
       matrix: { marginTop: 12, border: `1px solid ${BORDER}`, borderRadius: 8, padding: 10, background: SOFT },
-      table: { width: "100%", borderCollapse: "collapse", fontSize: 11.5 },
+      table: { width: "100%", borderCollapse: "collapse", fontSize: TYPE.control.fontSize },
       th: { textAlign: "left", color: MUTED, fontWeight: 500, padding: "5px 7px", borderBottom: `1px solid ${BORDER}` },
       td: { padding: "5px 7px", borderBottom: `1px solid ${BORDER}55`, whiteSpace: "nowrap" },
     };
@@ -193,9 +205,9 @@ window.__ModuleLoader__.load({
     }
 
     function statusColor(status) {
-      if (status === "done") return "#2e7d32";
-      if (status === "stale") return "#b26a00";
-      if (status === "deck") return "#1565c0";
+      if (status === "done") return SUCCESS;
+      if (status === "stale") return WARN;
+      if (status === "deck") return INFO;
       return "rgba(128,128,128,.35)";
     }
 
@@ -237,7 +249,7 @@ window.__ModuleLoader__.load({
             h("div", {
               style: {
                 fontWeight: 650,
-                fontSize: 15,
+                fontSize: TYPE.hero.fontSize,
                 lineHeight: 1.4,
                 display: "-webkit-box",
                 WebkitLineClamp: 2,
@@ -248,27 +260,27 @@ window.__ModuleLoader__.load({
             h("div", { style: { ...S.muted, marginTop: 4 } }, project.client || "未填客户")
           ),
           h("span", {
-            style: { ...S.muted, fontSize: 16, lineHeight: 1, marginTop: 1, opacity: hover ? 1 : 0.55 },
+            style: { ...S.muted, fontSize: TYPE.title.fontSize, lineHeight: 1, marginTop: 1, opacity: hover ? 1 : 0.55 },
             "aria-hidden": "true",
           }, "→")
         ),
         h("div", { style: { display: "flex", alignItems: "center", gap: 8, marginTop: 2 } },
-          h("span", { style: { fontSize: 11, color: MUTED, whiteSpace: "nowrap" } }, pages ? `${approved}/${pages} 页已确认` : "还没有页面"),
+          h("span", { style: { fontSize: TYPE.label.fontSize, color: MUTED, whiteSpace: "nowrap" } }, pages ? `${approved}/${pages} 页已确认` : "还没有页面"),
           pages ? h("div", { style: { flex: "1 1 auto", height: 4, borderRadius: 999, background: BORDER, overflow: "hidden" } },
             h("div", { style: { height: "100%", width: `${Math.round(ratio * 100)}%`, background: ACCENT, borderRadius: 999 } })
           ) : null
         ),
         h("div", { style: { display: "flex", gap: 6, flexWrap: "wrap" } },
           !pages
-            ? h("span", { style: { ...S.muted, fontSize: 11 } }, "打开内容对话开始")
+            ? h("span", { style: { ...S.muted, fontSize: TYPE.label.fontSize } }, "打开内容对话开始")
             : targetCounts.length
               ? targetCounts.map(([key, count]) => h("span", {
                   key,
-                  style: { ...S.badge, gap: 4, fontSize: 10.5 },
+                  style: { ...S.badge, gap: 4, fontSize: TYPE.caption.fontSize },
                 }, statusDot("done"), `${TARGET_LABELS[key]} ${count}`))
-              : h("span", { style: { ...S.muted, fontSize: 11 } }, "还没有产物")
+              : h("span", { style: { ...S.muted, fontSize: TYPE.label.fontSize } }, "还没有产物")
         ),
-        h("div", { style: { ...S.muted, paddingTop: 2, fontSize: 10.5 } }, `更新 ${formatTime(project.updatedAt)}`)
+        h("div", { style: { ...S.muted, paddingTop: 2, fontSize: TYPE.caption.fontSize } }, `更新 ${formatTime(project.updatedAt)}`)
       );
     }
 
@@ -344,7 +356,7 @@ window.__ModuleLoader__.load({
       }
       render() {
         if (this.state.error) {
-          return h("div", { style: { padding: 24, color: "#d9534f", whiteSpace: "pre-wrap", fontSize: 13, lineHeight: 1.6 } },
+          return h("div", { style: { padding: 24, color: DANGER, whiteSpace: "pre-wrap", fontSize: TYPE.item.fontSize, lineHeight: 1.6 } },
             "方案工作台渲染失败：",
             String(this.state.error?.message || this.state.error || "unknown error")
           );
@@ -696,10 +708,10 @@ window.__ModuleLoader__.load({
       return h("div", { style: S.root },
         header,
         h("div", { style: S.body },
-          error ? h("div", { style: { color: "#d9534f", marginBottom: 12 } }, error) : null,
+          error ? h("div", { style: { color: DANGER, marginBottom: 12 } }, error) : null,
           loading ? h(Empty, { text: "正在读取项目…" }) : projects.length === 0
             ? h("div", { style: { maxWidth: 620, margin: "40px auto", textAlign: "center" } },
-                h("div", { style: { fontSize: 16, fontWeight: 600, marginBottom: 8 } }, "还没有项目"),
+                h("div", { style: { fontSize: TYPE.title.fontSize, fontWeight: 600, marginBottom: 8 } }, "还没有项目"),
                 h("div", { style: S.muted }, "新建一个项目，导入需求，然后打开项目专属内容对话。"),
                 h("div", { style: { marginTop: 16 } }, h(Button, { variant: "primary", onClick: () => setNewOpen(true) }, "新建第一个项目"))
               )
@@ -1160,7 +1172,7 @@ window.__ModuleLoader__.load({
           ),
           contentMode === "skill" ? h("div", { style: { ...S.row, flexWrap: "wrap", gap: 8, marginBottom: 10 } },
             h(Button, { variant: "ghost", onClick: () => void checkContentSkill(), disabled: contentSkillStatus?.checking }, contentSkillStatus?.checking ? "检测中…" : "检测技能"),
-            h("span", { style: { ...TYPE.caption, color: contentSkillStatus?.available === false ? "#d9534f" : FAINT } }, contentSkillText)
+            h("span", { style: { ...TYPE.caption, color: contentSkillStatus?.available === false ? DANGER : FAINT } }, contentSkillText)
           ) : null,
           h("div", { style: promptDoc },
             h("div", { style: promptDocHead },
@@ -1198,7 +1210,7 @@ window.__ModuleLoader__.load({
                 placeholder: defaults.contentFallbackPrompt,
                 onChange: (event) => setContentFallbackPrompt(event.target.value),
               }),
-              contentMode === "skill" && !contentSkillName ? h("div", { style: { ...promptFixedLine, marginTop: 6, color: "#d9534f" } },
+              contentMode === "skill" && !contentSkillName ? h("div", { style: { ...promptFixedLine, marginTop: 6, color: DANGER } },
                 "注意：未填写内容技能，已使用内置提示词。"
               ) : null
             ) : null,
@@ -1287,8 +1299,8 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
           marginTop: 2,
           padding: "8px 10px",
           borderRadius: 8,
-          border: `1px solid ${referenceCheck.ok ? "#2f8f5b" : "#d9534f"}55`,
-          color: referenceCheck.ok ? "#2f8f5b" : "#d9534f",
+          border: `1px solid ${referenceCheck.ok ? SUCCESS : DANGER}55`,
+          color: referenceCheck.ok ? SUCCESS : DANGER,
           ...TYPE.caption,
         },
       },
@@ -1313,7 +1325,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
         h("div", { style: { ...S.row, justifyContent: "space-between", alignItems: "flex-start" } },
           h("div", { style: { minWidth: 0 } },
             h("div", { style: { display: "flex", alignItems: "center", gap: 6, minWidth: 0 } },
-              h("span", { style: { ...S.dot, background: library.ok ? "#2f8f5b" : "#d9534f", flex: "0 0 auto" } }),
+              h("span", { style: { ...S.dot, background: library.ok ? SUCCESS : DANGER, flex: "0 0 auto" } }),
               h("span", { style: { ...TYPE.item, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, library.name),
               library.active ? h("span", { style: { ...S.badge, ...TYPE.meta, color: ACCENT, borderColor: `${ACCENT}44`, background: `${ACCENT}0d` } }, "当前使用") : null
             ),
@@ -1327,7 +1339,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
             h(Button, { variant: "ghost", onClick: () => void rebuildReference(library.id), disabled: referenceBusy || referenceTargetDirty }, "重新构建"),
             h(Button, { variant: "ghost", onClick: () => void validateReference(library.id), disabled: referenceBusy || referenceTargetDirty }, "校验"),
             h(Button, { variant: "ghost", onClick: () => void renameReference(library), disabled: referenceBusy }, "重命名"),
-            !library.active ? h(Button, { variant: "ghost", onClick: () => void deleteReference(library), disabled: referenceBusy, style: { color: "#d9534f" } }, "删除") : null
+            !library.active ? h(Button, { variant: "ghost", onClick: () => void deleteReference(library), disabled: referenceBusy, style: { color: DANGER } }, "删除") : null
           ) : null
         ),
         referenceCheckBox(library)
@@ -1338,7 +1350,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
         ),
         h("div", { style: promptCard },
           sectionHeader("当前参考库", h("div", { style: { ...TYPE.caption, color: FAINT } }, librarySummary)),
-          referenceTargetDirty ? h("div", { style: { ...TYPE.caption, marginBottom: 10, color: "#d9534f" } },
+          referenceTargetDirty ? h("div", { style: { ...TYPE.caption, marginBottom: 10, color: DANGER } },
             "项目根目录有未保存修改；先在“其他设置”保存，再上传、切换或重建。"
           ) : null,
           h("div", { style: { display: "flex", flexDirection: "column", gap: 8 } },
@@ -1380,10 +1392,10 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
             h("div", { style: { height: "100%", width: `${Math.max(0, Math.min(100, Number(referenceProgress.percent) || 0))}%`, background: ACCENT } })
           ),
           h("div", { style: { ...TYPE.caption, color: FAINT } }, referenceProgress.message || ""),
-          referenceProgress.status === "error" ? h("div", { style: { ...TYPE.caption, color: "#d9534f", marginTop: 6 } }, referenceProgress.error || "构建失败") : null
+          referenceProgress.status === "error" ? h("div", { style: { ...TYPE.caption, color: DANGER, marginTop: 6 } }, referenceProgress.error || "构建失败") : null
         ) : null,
-        referenceError ? h("div", { style: { ...TYPE.body, color: "#d9534f", marginBottom: 12 } }, referenceError) : null,
-        !multiLibraryReady ? h("div", { style: { ...TYPE.caption, color: "#d9534f" } },
+        referenceError ? h("div", { style: { ...TYPE.body, color: DANGER, marginBottom: 12 } }, referenceError) : null,
+        !multiLibraryReady ? h("div", { style: { ...TYPE.caption, color: DANGER } },
           "当前 DSH 宿主还没有加载多参考库接口，请重启 DSH 后再管理库列表。"
         ) : null,
       ];
@@ -1418,7 +1430,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
           sectionHeader("图片生成能力",
             h(Button, { variant: "ghost", onClick: () => void checkImagegen(), disabled: imagegenChecking }, imagegenChecking ? "检测中…" : "重新检测"),
             "检测只做提示，不阻止图片按钮。生成时实际调用；工具缺失会正常报错。"),
-          h("div", { style: { ...TYPE.caption, color: imagegenLive?.available === false ? "#d9534f" : FAINT } }, imagegenText)
+          h("div", { style: { ...TYPE.caption, color: imagegenLive?.available === false ? DANGER : FAINT } }, imagegenText)
         ),
         h("div", { style: promptCard },
           sectionHeader("诊断与重置", null,
@@ -1500,33 +1512,33 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
           border: `1px solid ${SOFT_BORDER}`,
           background: "var(--dsw-alias-bg-base, rgba(128,128,128,.04))",
           color: MUTED,
-          fontSize: 13,
+          fontSize: TYPE.item.fontSize,
           lineHeight: 1,
         },
         navIconActive: {
-          color: "#ffffff",
+          color: ON_ACCENT,
           borderColor: "transparent",
-          background: "linear-gradient(145deg, #C83E38 0%, #9F0606 58%, #850000 100%)",
+          background: GRADIENT,
           boxShadow: "0 4px 12px rgba(173,1,1,.28), inset 0 1px 0 rgba(255,255,255,.2)",
         },
-        navTitle: { display: "block", fontSize: 12.5, lineHeight: 1.5, fontWeight: 550 },
+        navTitle: { display: "block", fontSize: TYPE.body.fontSize, lineHeight: 1.5, fontWeight: 550 },
         navHint: { display: "block", marginTop: 2, ...TYPE.caption, color: FAINT },
         railFoot: { marginTop: "auto", padding: "12px 10px 0", borderTop: `1px solid ${BORDER}`, ...TYPE.caption, color: FAINT },
         main: { minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column" },
         top: { flex: "0 0 auto", padding: "22px 28px 0", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, background: SURFACE, position: "relative", zIndex: 2 },
         crumb: { ...TYPE.meta, color: FAINT, letterSpacing: ".12em", textTransform: "uppercase" },
         pageTitle: { margin: "7px 0 0", ...TYPE.display },
-        pageSub: { margin: "6px 0 0", ...TYPE.caption, color: FAINT, fontSize: 11 },
-        close: { appearance: "none", border: 0, background: "transparent", color: MUTED, fontSize: 20, lineHeight: 1, padding: 3, cursor: "pointer", fontFamily: "inherit" },
+        pageSub: { margin: "6px 0 0", ...TYPE.label, color: FAINT },
+        close: { appearance: "none", border: 0, background: "transparent", color: MUTED, fontSize: TYPE.display.fontSize, lineHeight: 1, padding: 3, cursor: "pointer", fontFamily: "inherit" },
         content: { flex: "1 1 auto", minHeight: 0, overflow: "auto", scrollbarGutter: "stable", padding: "20px 28px 20px" },
-        error: { margin: "0 28px 10px", padding: "8px 10px", border: "1px solid rgba(217,83,79,.35)", borderRadius: 7, background: "rgba(217,83,79,.08)", color: "#d9534f", ...TYPE.caption },
+        error: { margin: "0 28px 10px", padding: "8px 10px", border: "1px solid rgba(217,83,79,.35)", borderRadius: 7, background: "rgba(217,83,79,.08)", color: DANGER, ...TYPE.caption },
         footer: { flex: "0 0 56px", borderTop: `1px solid ${BORDER}`, background: "var(--dsw-alias-bg-layer-2, rgba(128,128,128,.035))", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "0 18px 0 20px" },
         footerLeft: { display: "flex", alignItems: "center", gap: 6, minWidth: 0, ...TYPE.caption, color: FAINT },
         footerDot: { width: 5, height: 5, borderRadius: 999, flex: "0 0 auto", background: "currentColor" },
         footerActions: { display: "flex", alignItems: "center", gap: 8, flex: "0 0 auto" },
       };
       const footerStatus = error || copyHint || (busy ? "保存中…" : dirty ? "有未保存更改" : "所有更改已保存");
-      const footerTone = error ? "#d9534f" : dirty ? ACCENT : "#2f8f5b";
+      const footerTone = error ? DANGER : dirty ? ACCENT : SUCCESS;
       const activeContent = activeTab === "prompts" ? contentTab : activeTab === "reference" ? referenceTab : advancedContent;
       return h("div", { style: S.overlay, onMouseDown: (event) => { if (event.target === event.currentTarget) requestClose(); } },
         h("div", { style: SS.shell },
@@ -1619,12 +1631,12 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
           h(Field, { label: "需求附件（docx / pdf / txt / md / pptx）" }, h("input", { type: "file", multiple: true, onChange: (event) => setFiles(Array.from(event.target.files || [])) })),
           h("div", { style: { ...S.row, marginBottom: 16 } },
             h("span", { style: S.label }, "目标格式："),
-            TARGET_ORDER.map((target) => h("label", { key: target, style: { display: "inline-flex", gap: 5, alignItems: "center", fontSize: 12 } },
+            TARGET_ORDER.map((target) => h("label", { key: target, style: { display: "inline-flex", gap: 5, alignItems: "center", fontSize: TYPE.small.fontSize } },
               h("input", { type: "checkbox", checked: !!targets[target], onChange: (event) => setTargets((prev) => ({ ...prev, [target]: event.target.checked })) }),
               TARGET_LABELS[target]
             ))
           ),
-          error ? h("div", { style: { color: "#d9534f", fontSize: 12, marginBottom: 10 } }, error) : null,
+          error ? h("div", { style: { color: DANGER, fontSize: TYPE.small.fontSize, marginBottom: 10 } }, error) : null,
           h("div", { style: { ...S.row, justifyContent: "flex-end" } },
             h(Button, { variant: "ghost", onClick: onClose, disabled: busy }, "取消"),
             h(Button, { variant: "primary", onClick: () => void submit(), disabled: busy }, busy ? "创建中…" : "创建并打开内容对话")
@@ -1660,7 +1672,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
               onClick: () => choose(key),
             }, label))
           ),
-          h("div", { style: { ...S.muted, marginBottom: 6, fontSize: 12 } },
+          h("div", { style: { ...S.muted, marginBottom: 6, fontSize: TYPE.small.fontSize } },
             "快捷项会整段替换本页的取舍规则；填写自定义要求时，会替换快捷项规则。"
           ),
           h("textarea", {
@@ -1848,7 +1860,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
                 h("span", { style: { fontWeight: 600 } }, item.id),
                 h("span", { style: S.muted }, item.copyStatus === "approved" ? "已确认" : "草稿")
               ),
-              h("div", { style: { fontSize: 11, color: MUTED, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, item.title),
+              h("div", { style: { fontSize: TYPE.label.fontSize, color: MUTED, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, item.title),
               h("div", { style: { display: "flex", gap: 4, marginTop: 2 } },
                 TARGET_ORDER.map((key) => h("span", { key, title: `${key}: ${statusText(item.renders?.[key]?.status)}` }, statusDot(item.renders?.[key]?.status)))
               )
@@ -1859,7 +1871,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
           h("div", { style: { ...S.pane, borderRight: `1px solid ${BORDER}`, display: "flex", flexDirection: "column", gap: 10 } },
             page ? h("div", { style: { display: "flex", justifyContent: "space-between", gap: 8, alignItems: "flex-start", flexWrap: "wrap" } },
               h("div", { style: { minWidth: 0 } },
-                h("div", { style: { fontWeight: 650, fontSize: 15, lineHeight: 1.35 } }, page.title),
+                h("div", { style: { fontWeight: 650, fontSize: TYPE.hero.fontSize, lineHeight: 1.35 } }, page.title),
                 h("div", { style: S.muted }, `${page.id} · 当前 v${page.currentVersion || 0} · ${page.copyStatus === "approved" ? "已确认" : "草稿"}${page.approvedVersion ? ` · 已确认 v${page.approvedVersion}` : ""}`)
               ),
               h("div", { style: { ...S.row, flexWrap: "wrap", justifyContent: "flex-end" } },
@@ -1870,7 +1882,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
               )
             ) : h(Empty, { text: "选择一页查看文案。" }),
             page ? h("pre", { style: S.pre }, page.copy) : null,
-            page ? h("div", { style: { ...S.muted, fontSize: 11 } }, `hash ${page.currentHash || "-"} · 更新 ${formatTime(page.updatedAt)}`) : null
+            page ? h("div", { style: { ...S.muted, fontSize: TYPE.label.fontSize } }, `hash ${page.currentHash || "-"} · 更新 ${formatTime(page.updatedAt)}`) : null
           ),
           h("div", { style: S.resizer, role: "separator", "aria-orientation": "vertical", title: "拖动调整文案/预览列宽", onPointerDown: (event) => startResize("middle", event) }),
           h("div", { style: { minHeight: 0, display: "flex", flexDirection: "column" } },
@@ -1935,7 +1947,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
       if (tab === "html") {
         return h("div", { style: { height: "100%", minHeight: 300, display: "flex", flexDirection: "column", gap: 6 } },
           h("div", { style: { ...S.row, justifyContent: "space-between", gap: 8 } },
-            h("div", { style: { ...S.muted, fontSize: 11, minWidth: 0 } }, `${render.path} · ${statusText(render.status)}`),
+            h("div", { style: { ...S.muted, fontSize: TYPE.label.fontSize, minWidth: 0 } }, `${render.path} · ${statusText(render.status)}`),
             h(Button, { variant: "ghost", onClick: () => onGenerate(tab) }, "重新生成")
           ),
           h("div", { style: previewStage },
@@ -1943,7 +1955,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
               key: `${page.id}-${render.mtimeMs}`,
               src: fileUrl(project.id, render.path),
               sandbox: "allow-scripts",
-              style: { width: "100%", height: "100%", minHeight: 300, border: 0, borderRadius: 4, background: "#fff" },
+              style: { width: "100%", height: "100%", minHeight: 300, border: 0, borderRadius: 4, background: CANVAS },
               title: `${page.id} HTML`,
             })
           )
@@ -1952,11 +1964,11 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
       if (tab === "image") {
         return h("div", { style: { height: "100%", minHeight: 300, display: "flex", flexDirection: "column", gap: 6 } },
           h("div", { style: { ...S.row, justifyContent: "space-between", gap: 8 } },
-            h("div", { style: { ...S.muted, fontSize: 11, minWidth: 0 } }, `${render.path} · ${statusText(render.status)}`),
+            h("div", { style: { ...S.muted, fontSize: TYPE.label.fontSize, minWidth: 0 } }, `${render.path} · ${statusText(render.status)}`),
             h(Button, { variant: "ghost", onClick: () => onGenerate(tab) }, "重新生成")
           ),
           h("div", { style: previewStage },
-            h("img", { src: fileUrl(project.id, render.path), alt: `${page.id} ${page.title}`, style: { maxWidth: "100%", maxHeight: "100%", objectFit: "contain", borderRadius: 4, background: "#fff", boxShadow: "0 1px 8px rgba(0,0,0,.16)" } })
+            h("img", { src: fileUrl(project.id, render.path), alt: `${page.id} ${page.title}`, style: { maxWidth: "100%", maxHeight: "100%", objectFit: "contain", borderRadius: 4, background: CANVAS, boxShadow: "0 1px 8px rgba(0,0,0,.16)" } })
           )
         );
       }
@@ -2029,7 +2041,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
       }
       return h("div", { style: { height: "100%", minHeight: 300, display: "flex", flexDirection: "column", gap: 8 } },
         h("div", { style: { ...S.row, justifyContent: "space-between", gap: 8 } },
-          h("div", { style: { ...S.muted, fontSize: 11, minWidth: 0 } },
+          h("div", { style: { ...S.muted, fontSize: TYPE.label.fontSize, minWidth: 0 } },
             `${render.path} · ${statusText(render.status)}${render.deck ? " · 整份 deck 首屏" : ""}`
           ),
           h("div", { style: { ...S.row, flexWrap: "wrap" } },
@@ -2038,10 +2050,10 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
             h(Button, { variant: "primary", disabled: !ready, title: ready ? "" : "页面预览还没生成好", onClick: () => openArtifact("pptx", `已在系统程序中打开 ${pptxFilename}`) }, "打开 PPTX")
           )
         ),
-        hint ? h("div", { style: { ...S.muted, fontSize: 10.5 } }, hint) : null,
-        !loaded && !failed ? h("div", { style: { ...S.muted, fontSize: 12 } }, "正在生成页面预览…") : null,
+        hint ? h("div", { style: { ...S.muted, fontSize: TYPE.caption.fontSize } }, hint) : null,
+        !loaded && !failed ? h("div", { style: { ...S.muted, fontSize: TYPE.small.fontSize } }, "正在生成页面预览…") : null,
         failed
-          ? h("div", { style: { color: "#d9534f", fontSize: 12, lineHeight: 1.7 } },
+          ? h("div", { style: { color: DANGER, fontSize: TYPE.small.fontSize, lineHeight: 1.7 } },
               "PPT 预览生成失败，可以直接用「打开 PDF」或「打开 PPTX」查看。")
           : h("div", { style: { flex: "1 1 auto", minHeight: 300, padding: 10, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(128,128,128,.13)", border: `1px solid ${SOFT_BORDER}`, borderRadius: 10, overflow: "hidden" } },
               h("img", {
@@ -2050,10 +2062,10 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
                 alt: `${page.id} ${page.title}`,
                 onLoad: () => { setLoaded(true); setReady(true); },
                 onError: () => { setLoaded(true); setFailed(true); setReady(true); },
-                style: { maxWidth: "100%", maxHeight: "100%", width: "auto", height: "auto", objectFit: "contain", display: "block", borderRadius: 4, background: "#fff", boxShadow: "0 1px 8px rgba(0,0,0,.16)" },
+                style: { maxWidth: "100%", maxHeight: "100%", width: "auto", height: "auto", objectFit: "contain", display: "block", borderRadius: 4, background: CANVAS, boxShadow: "0 1px 8px rgba(0,0,0,.16)" },
               })
             ),
-        h("div", { style: { ...S.muted, fontSize: 10.5, lineHeight: 1.6 } },
+        h("div", { style: { ...S.muted, fontSize: TYPE.caption.fontSize, lineHeight: 1.6 } },
           "LibreOffice 渲染预览，最终效果以 PowerPoint 为准。"
         ),
         pdfOpen ? h(PdfViewer, {
@@ -2068,7 +2080,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
 
     function Matrix({ project, pageId, onSelect }) {
       return h("details", { style: { ...S.matrix, margin: "0 18px 14px", flex: "0 0 auto" } },
-        h("summary", { style: { cursor: "pointer", fontSize: 12, fontWeight: 600 } }, "页面 × 产物状态矩阵"),
+        h("summary", { style: { cursor: "pointer", fontSize: TYPE.small.fontSize, fontWeight: 600 } }, "页面 × 产物状态矩阵"),
         h("table", { style: { ...S.table, marginTop: 8 } },
           h("thead", null, h("tr", null, ["页面", "文案", "PPTX", "图片", "HTML"].map((label) => h("th", { key: label, style: S.th }, label)))),
           h("tbody", null, (project.pages || []).map((item) => h("tr", { key: item.id, onClick: () => onSelect(item.id), style: { cursor: "pointer" } },
@@ -2186,12 +2198,12 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
                 h(Button, { variant: "primary", onClick: () => void approveVersion(selected.version), disabled: busy }, `确认 v${selected.version}`),
                 h(Button, { onClick: () => void restore(selected.version), disabled: busy }, "恢复此版本")
               ) : null,
-              selected ? h("div", { style: { fontFamily: MONO, fontSize: 12, lineHeight: 1.7, whiteSpace: "pre-wrap", wordBreak: "break-word", border: `1px solid ${BORDER}`, borderRadius: 8, padding: 10 } },
+              selected ? h("div", { style: { fontFamily: MONO, fontSize: TYPE.small.fontSize, lineHeight: 1.7, whiteSpace: "pre-wrap", wordBreak: "break-word", border: `1px solid ${BORDER}`, borderRadius: 8, padding: 10 } },
                 diff.map((line, index) => h("div", {
                   key: `${index}-${line.type}`,
                   style: {
                     background: line.type === "add" ? "rgba(46,125,50,.14)" : line.type === "del" ? "rgba(173,1,1,.14)" : "transparent",
-                    color: line.type === "add" ? "#2e7d32" : line.type === "del" ? ACCENT : "inherit",
+                    color: line.type === "add" ? SUCCESS : line.type === "del" ? ACCENT : "inherit",
                     textDecoration: line.type === "del" ? "line-through" : "none",
                   },
                 }, `${line.type === "add" ? "+ " : line.type === "del" ? "- " : "  "}${line.text}`))

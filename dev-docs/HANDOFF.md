@@ -3,7 +3,7 @@
 > **新 agent / 新对话先读这里。** 本目录随仓库版本控制，只排除在 npm 包外。阅读顺序：本文件 → [SPEC.md](SPEC.md) → [DESIGN.md](DESIGN.md) → [AUDIT.md](AUDIT.md) → [README.md](../README.md)，并遵守 [AGENTS.md](../AGENTS.md) 的编辑边界。
 
 - 快照日期：2026-11-07
-- 当前版本：**0.1.54**
+- 当前版本：**0.1.55**
 - 插件目录：`<插件根>`
 - 设计规格：[SPEC.md](SPEC.md)
 - 使用说明：[README.md](../README.md)
@@ -236,6 +236,15 @@ DELETE /deck-workbench/api/reference/libraries/:id
 - 测试 11 → 16 例：新增批准状态机（`test/approval.test.js`）与 HTML 响应头（`test/http.test.js`）。
 - `dev-docs/` 重新纳入版本控制，只靠 `.npmignore` 与 `package.json files` 排除在包外。
 
+### 0.1.55（2026-11-07）
+
+界面样式收敛成 token，且不引入构建步骤。
+
+- `client/client.js` 里 41 处 `fontSize` 字面量与 30 处裸色值全部换成 `TYPE.*` 与颜色角色；`grep` 校验现在为零裸值。
+- 颜色角色补齐：`DANGER` / `SUCCESS` / `WARN` / `INFO` / `ON_ACCENT` / `CANVAS` / `TOAST_BG` / `GRADIENT`；产物 done 的 `#2e7d32` 并入 `SUCCESS #2f8f5b`，与 DESIGN.md 一致。
+- `TYPE` 补三档：`small 12`、`hero 15`、`title 16`，主界面不再出现标尺外的字号。
+- DESIGN.md 从「设置弹窗规范」扩为「界面设计规范」，覆盖工作台主界面，并注明零裸值的回归检查。
+
 ### 0.1.54（2026-11-07）
 
 读盘和人眼的节奏对齐：不再为「看一眼」付出全量 I/O。
@@ -276,7 +285,7 @@ DELETE /deck-workbench/api/reference/libraries/:id
 
 优先顺序：
 
-1. 确认真实 DSH 已加载 0.1.54：设置三个标签、参考库状态/校验、可选内容技能/默认文案、图片按钮、项目列表；
+1. 确认真实 DSH 已加载 0.1.55：设置三个标签、参考库状态/校验、可选内容技能/默认文案、图片按钮、项目列表；
 2. 新建真实项目走“会话 → 蓝图 → 页面 → 生成 PPTX/图片/HTML”全链路，验证共享参考库下的 PPTX/HTML/图片输出；
 3. 验证 `html-layout` / `image-layout` 的独立加载和真实页面出图/HTML，再清理退役备份与技能内参考副本；
 4. 完成参考库构建器的 agent 标注闭环与开源整理；
