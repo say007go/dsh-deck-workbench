@@ -23,6 +23,21 @@ window.__ModuleLoader__.load({
         };
       }, [intervalMs]);
     };
+    // ---------------------------------------------------------------------------
+    // 结构导航（单文件客户端，没有构建步骤；改代码前先看这张表，按分区定位）
+    //   1. 样式 token        颜色常量 / TYPE 字号 / S 组件样式表
+    //   2. 工具函数          endpoint / fileUrl / formatTime / statusText / diffLines
+    //   3. 通用组件          ProjectCard / Button / Field / Empty / Toast / Icon / SettingsIcon
+    //   4. 提示词构造        buildStartPrompt / buildRenderPrompt / buildOptimizePrompt
+    //   5. 工作台外壳        Workbench（侧栏项目列表、全局设置加载、轮询）
+    //   6. 设置弹窗          SettingsModal（参考库 / 提示词 / 图片生成）
+    //   7. 新建与生成弹窗    NewProjectModal / GenerateModal
+    //   8. 项目详情          ProjectView（三栏：页面列表 / 预览 / 历史）
+    //   9. 预览与二次弹窗    PreviewPane / PdfViewer / PptxPreview / Matrix / OptimizeModal / HistoryModal
+    //  10. 注册入口          apply(ctx)
+    // ---------------------------------------------------------------------------
+
+    // ---- 1. 样式 token ----
     const ACCENT = "#AD0101";
     // 语义色与 DESIGN.md 的角色一一对应；组件里不要再写裸色值。
     const DANGER = "#d9534f";
@@ -148,6 +163,7 @@ window.__ModuleLoader__.load({
       td: { padding: "5px 7px", borderBottom: `1px solid ${BORDER}55`, whiteSpace: "nowrap" },
     };
 
+    // ---- 2. 工具函数 ----
     function endpoint(path) {
       const rel = `deck-workbench/${String(path || "").replace(/^\/+/, "")}`;
       if (typeof document === "undefined") return `/${rel}`;
@@ -219,6 +235,7 @@ window.__ModuleLoader__.load({
       return h("span", { style: { ...S.dot, background: statusColor(status) }, title: statusText(status) });
     }
 
+    // ---- 3. 通用组件 ----
     function ProjectCard({ project, onOpen }) {
       const [hover, setHover] = useState(false);
       const pages = Number(project.pageCount || 0);
@@ -448,6 +465,7 @@ window.__ModuleLoader__.load({
       return sessionId;
     }
 
+    // ---- 4. 提示词构造 ----
     function contentRequirement(settings) {
       const text = String(settings?.contentPrompt || "").trim();
       return text ? ["内容要求：", text] : [];
@@ -535,6 +553,7 @@ window.__ModuleLoader__.load({
       return out.reverse();
     }
 
+    // ---- 5. 工作台外壳 ----
     function Workbench() {      const [projects, setProjects] = useState([]);
       const [loading, setLoading] = useState(true);
       const [error, setError] = useState("");
@@ -741,6 +760,7 @@ window.__ModuleLoader__.load({
       );
     }
 
+    // ---- 6. 设置弹窗 ----
     function SettingsModal({ settings, reference, libraries, activeId, imagegen, defaults, onRefresh, onClose, onSave }) {
       const [activeTab, setActiveTab] = useState("prompts");
       const [projectsRoot, setProjectsRoot] = useState(settings?.projectsRoot || "");
@@ -1023,6 +1043,7 @@ window.__ModuleLoader__.load({
         borderBottom: `1px solid ${BORDER}`,
         background: "transparent",
       };
+      // -- 6.1 渲染小工具：标题、分段控件、行布局 --
       const moduleTitle = (title, style = {}) => h("div", {
         style: { ...TYPE.section, ...style },
       }, title);
@@ -1441,6 +1462,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
           )
         ),
       ];
+      // -- 6.2 本弹窗的局部样式覆盖（只在这里用，不进 S） --
       const SS = {
         shell: {
           width: "min(1120px, calc(100vw - 48px))",
@@ -1540,6 +1562,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
       const footerStatus = error || copyHint || (busy ? "保存中…" : dirty ? "有未保存更改" : "所有更改已保存");
       const footerTone = error ? DANGER : dirty ? ACCENT : SUCCESS;
       const activeContent = activeTab === "prompts" ? contentTab : activeTab === "reference" ? referenceTab : advancedContent;
+      // -- 6.3 弹窗骨架：左侧导航 + 右侧面板 --
       return h("div", { style: S.overlay, onMouseDown: (event) => { if (event.target === event.currentTarget) requestClose(); } },
         h("div", { style: SS.shell },
           h("div", { style: SS.body },
@@ -1592,6 +1615,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
       );
     }
 
+    // ---- 7. 新建与生成弹窗 ----
     function NewProjectModal({ onClose, onCreate }) {
       const [title, setTitle] = useState("");
       const [client, setClient] = useState("");
@@ -1693,6 +1717,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
       );
     }
 
+    // ---- 8. 项目详情 ----
     function ProjectView({ project: initial, settings, onBack, onRefresh, onDelete, showToast }) {
       const [project, setProject] = useState(initial);
       const [pageId, setPageId] = useState(initial.pages?.[0]?.id || null);
@@ -1920,6 +1945,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
       );
     }
 
+    // ---- 9. 预览与二次弹窗 ----
     function PreviewPane({ project, page, tab, onGenerate }) {
       const render = page.renders?.[tab];
       const previewStage = {
@@ -2214,6 +2240,7 @@ ${DEFAULT_OPTIMIZE_INSTRUCTION}
       );
     }
 
+    // ---- 10. 注册入口 ----
     function apply(ctx) {
       try {
         services.sessions = ctx.get?.("sessions") ?? null;
